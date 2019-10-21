@@ -1,0 +1,9 @@
+<resources>
+    <!--
+    api key
+    set using build.gradle's fields
+    To use the api key in XML files, use the "@string/api_key"
+    To use the api key in a Java file, use BuildConfig.ApiKey; This is an attr
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">"@string/api_key</string>
+</resources>
