@@ -17,6 +17,10 @@ import com.google.android.gms.maps.model.PolylineOptions;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+    private static LatLng point1 = new LatLng(51.5, -0.1);
+    private static LatLng point2 = new LatLng(40.7, -74.0);
+    private static LatLng[] endpoints = {point1, point2};
+    private static int count = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +32,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
     }
 
+    public static void setEndpoint(final LatLng latLng) {
+        endpoints[count] = latLng;
+        ++count;
+        count %= 2;
+    }
 
     /**
      * Manipulates the map once available.
@@ -45,20 +54,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        LatLng latlog[] = new LatLng[2];
-        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        /*mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             int count = 0;
             @Override
             public void onMapClick(LatLng latLng) {
                 latlog[count]= latLng;
                 count++;
             }
-        });
-/*        mMap.setOnMapClickListener((LatLng latlng) -> {
-                latlog[count]= latlng;
-                count++;
+        });*/
+        mMap.setOnMapClickListener((LatLng latlng) -> {
+            MapsActivity.setEndpoint(latlng);
             });
-*/
+
+        
         Polyline line = mMap.addPolyline(new PolylineOptions()
             .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
             .width(5)
