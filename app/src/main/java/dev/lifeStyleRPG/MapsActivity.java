@@ -1,8 +1,9 @@
 package dev.lifeStyleRPG;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import androidx.fragment.app.FragmentActivity;
-
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -10,6 +11,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -38,10 +41,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng latlog[] = new LatLng[2];
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            int count = 0;
+            @Override
+            public void onMapClick(LatLng latLng) {
+                latlog[count]= latLng;
+                count++;
+            }
+        });
+/*        mMap.setOnMapClickListener((LatLng latlng) -> {
+                latlog[count]= latlng;
+                count++;
+            });
+*/
+        Polyline line = mMap.addPolyline(new PolylineOptions()
+            .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
+            .width(5)
+            .color(Color.RED));
     }
 }
