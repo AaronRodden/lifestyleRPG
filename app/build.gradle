@@ -22,6 +22,10 @@ android {
             resValue 'string', "api_key", lifeStyleRPG_mapskey
         }
     }
+    compileOptions {
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+    }
 }
 
 dependencies {
