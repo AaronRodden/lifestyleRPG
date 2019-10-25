@@ -1,5 +1,6 @@
 package dev.lifeStyleRPG;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import androidx.fragment.app.FragmentActivity;
@@ -21,6 +22,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static LatLng point2 = new LatLng(40.7, -74.0);
     private static LatLng[] endpoints = {point1, point2};
     private static int count = 0;
+
+    Intent locationIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,10 +69,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             MapsActivity.setEndpoint(latlng);
             });
 
+
         
         Polyline line = mMap.addPolyline(new PolylineOptions()
             .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
             .width(5)
             .color(Color.RED));
+        startLocationService();
+    }
+
+    public void startLocationService(){
+        Log.d("startloc", "hello");
+        locationIntent = new Intent(this, LocationService.class);
+        Log.d("startloc", "start service");
+        startService(locationIntent);
     }
 }
