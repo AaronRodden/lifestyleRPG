@@ -8,7 +8,14 @@ import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelProviders;
+
+import android.os.PersistableBundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,7 +26,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
     private GoogleMap mMap;
     private static LatLng point1 = new LatLng(51.5, -0.1);
@@ -28,7 +35,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static int count = 0;
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
+    mapsViewModel viewModel;
 
+    Button locationButton;
+    String locButt_text;
     Intent locationIntent;
 
     @Override
@@ -39,6 +49,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        locationButton = findViewById(R.id.MapsLocationButton);
+        viewModel = ViewModelProviders.of(this).get(mapsViewModel.class);
+        locationButton.setText(viewModel.get_current_text());
     }
 
     public static void setEndpoint(final LatLng latLng) {
@@ -58,6 +71,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        Log.e("MapsActivity", "onMapREady");
         mMap = googleMap;
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
@@ -81,21 +95,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
             .width(5)
             .color(Color.RED));
-        startLocationService();
     }
 
-    public void startLocationService() {
-        //ask for permissions.
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
-        } else {
-            Log.d("startloc", "hello");
-            locationIntent = new Intent(this, LocationService.class);
-            Log.d("startloc", "start service");
-            startService(locationIntent);
+    public void startLocationService(View view) {
+        //this is the location button on maps
+        locationButton = (Button) view;
+        locButt_text = locationButton.getText().toString();
+        locationIntent = new Intent(this, LocationService.class);
+        if (locButt_text.equals(getResources().getString(R.string.start_location))){
+            Log.d("startLocationService", locButt_text);
+            //ask for permissions.
+            //need to still handle a deny request
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
+                Log.d("startLocationService","not granted");
+                //if permissions aren't set, ask
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
+            } else {
+                startService(locationIntent);
+                Log.d("startloc", "start service");
+                locationButton.setText(R.string.stop_location);
+                viewModel.setString(getResources().getString(R.string.stop_location));
+            }
+        }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
+            Log.d("stopLocationService", locButt_text);
+            stopService(locationIntent);
+            viewModel.setString(getResources().getString(R.string.start_location));
+            locationButton.setText(R.string.start_location);
         }
     }
+
+
 }

@@ -38,10 +38,20 @@ public class LocationService extends Service {
         return null;
     }
 
+    @Override
+    public void onDestroy(){
+        Log.d("location-service", "on-Destroy");
+        handler.removeCallbacks(rt);
+        //stop the updates
+        if (locationManager != null){
+            locationManager.removeUpdates(locationListener);
+        }
+        super.onDestroy();
+    }
     //service onStartCommand
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("asdf", "onStartCommand: ");
+        Log.d("location-service", "onStartCommand: ");
         this.intent = intent;
         //start the thread which will track location
         rt = new Runnable() {
@@ -55,12 +65,11 @@ public class LocationService extends Service {
 
     void location() {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Log.d("location", "hello");
         //I think this asks for permission first. Permissions should probably be asked earlier, like in the maps activity
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-                Log.e("location", "user did not grant permission");
+                Log.e("location-service", "user did not grant permission");
         }else{
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         }
@@ -77,7 +86,7 @@ public class LocationService extends Service {
                 locationManager.removeUpdates(locationListener);
                 lat_new = location.getLatitude();
                 lon_new = location.getLongitude();
-                Log.v("Location-Listener", "Location changed " + lat_new + " " + lon_new);
+                Log.v("location-service", "Location changed " + lat_new + " " + lon_new);
             }
 
         }
