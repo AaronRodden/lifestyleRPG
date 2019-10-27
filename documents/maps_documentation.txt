@@ -1,0 +1,19 @@
+Maverick:
+ViewModel class: In summary I use this to save data on activity states. Usually used for UI things, but you can probably use it on the various lifecycle functions (ie oncreate, destroy, resume etc). Cool thing is that you can really use this anywhere. It is good practice use a different class for every activity, but I think we can get away with using one for multiple. Create mapsViewModel object, and simply add methods to the class specified within the class file. Use the ViewModelsProviders.of(<UI_controller>).get(Viewmodel class) and it is bound to the activity. Call methods to save attr's within the class. Really easy way to save data.
+
+LocationService Class: This handles the location listener and manager. Currently receives location change updates, and it output to logcat. Currently there is no post delay, so the power efficiency is really bad, and will need a lot more work. However this works too. It is run in the background thread rt, and handled by Handler, which 'handles' threads. I haven't implemented it in yet, but it will communicate with the Maps activity using a broadcast receiver. Essentially whenever the location changes, we want to send a broadcast to a receiver on the Maps activity, and send data, etc. Currently works in base functionality - 'I think'.
+
+
+Design: (Of what I think the workflow is, feel free to edit this)
+Maps activity
+	-user presses start tracker
+	-location service is started
+	-on a location change either: append the lat/lng to a linked list every x seconds.
+	-when the user presses stop
+		-handler stops the thread
+		- saves all the info into a payload
+		- broadcast sender sends the payload to the receiver on MapsActivity
+	-Maps activity receives this payload
+	-does stuff with payload
+	-create polylines based on payload
+		-some easy algorithm, can probably be a lambda funct that draws the polylines
