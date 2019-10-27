@@ -1,4 +1,5 @@
 package dev.lifeStyleRPG;
+
 import android.Manifest;
 import android.app.Service;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.os.Handler;
 import android.os.IBinder;
 
 import androidx.core.app.ActivityCompat;
+
 import android.util.Log;
 import android.widget.Toast;
 
@@ -24,7 +26,7 @@ public class LocationService extends Service {
     private boolean gps_enabled = false;
     private boolean network_enabled = false;
 
-    //For communicating with other activities
+    //handler is in charge of running threads
     private Handler handler = new Handler();
     //thread this service runs on
     private Runnable rt;
@@ -38,7 +40,7 @@ public class LocationService extends Service {
 
     //service onStartCommand
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId){
+    public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("asdf", "onStartCommand: ");
         this.intent = intent;
         //start the thread which will track location
@@ -47,24 +49,22 @@ public class LocationService extends Service {
                 location();
             }
         };
+        handler.post(rt);
         return START_STICKY;
     }
 
-    void location(){
+    void location() {
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Log.d("location", "hello");
         //I think this asks for permission first. Permissions should probably be asked earlier, like in the maps activity
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }else {
+                Log.e("location", "user did not grant permission");
+        }else{
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         }
     }
-
-
 
     //we want to override onLocation changed function, plus do stuff within this class
     private class myLocationListener implements LocationListener{

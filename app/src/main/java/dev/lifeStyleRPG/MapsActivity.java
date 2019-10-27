@@ -1,8 +1,12 @@
 package dev.lifeStyleRPG;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 import android.util.Log;
 
@@ -22,6 +26,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static LatLng point2 = new LatLng(40.7, -74.0);
     private static LatLng[] endpoints = {point1, point2};
     private static int count = 0;
+    //for permissions, basically an arbitrary number to mark/identify requests
+    final static int REQUEST_CODE = 100;
 
     Intent locationIntent;
 
@@ -78,10 +84,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         startLocationService();
     }
 
-    public void startLocationService(){
-        Log.d("startloc", "hello");
-        locationIntent = new Intent(this, LocationService.class);
-        Log.d("startloc", "start service");
-        startService(locationIntent);
+    public void startLocationService() {
+        //ask for permissions.
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
+        } else {
+            Log.d("startloc", "hello");
+            locationIntent = new Intent(this, LocationService.class);
+            Log.d("startloc", "start service");
+            startService(locationIntent);
+        }
     }
 }
