@@ -8,35 +8,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1013088912080:android:dc87338b9f65939f7354d5",
-        "android_client_info": {
-          "package_name": "com.threenahalfasians.lifestylerpg"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1013088912080-7dm8mif6s18gn5pjjbkcpisvimnps3lt.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDUGUOJgAn3fdMaZxHG0FhxPsxaVSReYKc"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1013088912080-7dm8mif6s18gn5pjjbkcpisvimnps3lt.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:1013088912080:android:ae8c1db8705dd2df7354d5",
         "android_client_info": {
           "package_name": "dev.lifeStyleRPG"
