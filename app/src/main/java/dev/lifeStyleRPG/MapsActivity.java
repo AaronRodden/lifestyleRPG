@@ -1,16 +1,21 @@
 package dev.lifeStyleRPG;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.os.PersistableBundle;
 import android.util.Log;
@@ -41,6 +46,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String locButt_text;
     Intent locationIntent;
 
+    //This is called whenever the activity is started up, or when momentarily stopped
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,9 +55,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+
+        //initialize the locationButton
         locationButton = findViewById(R.id.MapsLocationButton);
+        //set up the viewModel class, bind it to this activity
         viewModel = ViewModelProviders.of(this).get(mapsViewModel.class);
+        //set text of location button from viewmodel
         locationButton.setText(viewModel.get_current_text());
+
+        //Register this activity to receive messages
+        //So actions with "sample-event" are found
+        LocalBroadcastManager.getInstance(this).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
+    }
+
+    //This method is called when the activity is going to be destroyed, not paused
+    //This should save state of the activity, send data to firebase etc.
+    @Override
+    protected void onDestroy(){
+        //unregister the listener
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(myBroadcastReceiver);
+        super.onDestroy();
     }
 
     public static void setEndpoint(final LatLng latLng) {
@@ -88,9 +112,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMapClickListener((LatLng latlng) -> {
             MapsActivity.setEndpoint(latlng);
             });
-
-
-        
         Polyline line = mMap.addPolyline(new PolylineOptions()
             .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
             .width(5)
@@ -123,6 +144,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             locationButton.setText(R.string.start_location);
         }
     }
+
+    /*
+    BroadCast receiver to interact with a local broadcast manasger from Location Service.
+    Below methods will interact with the maps activity.
+     */
+    private static BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String message = intent.getStringExtra("message");
+            Log.d("receiver", "Got message: " + message);
+        }
+    };
 
 
 }
