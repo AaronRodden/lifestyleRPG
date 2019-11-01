@@ -6,5 +6,23 @@
     android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapsActivity"
-    />
+    tools:context=".MapsActivity" >
+
+    <Button
+        android:id="@+id/MapsLocationButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|bottom"
+        android:layout_marginBottom="20dp"
+        android:alpha=".75"
+        android:background="#95296643"
+        android:backgroundTint="#95296643"
+        android:padding="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="@string/start_location"
+        android:onClick="startLocationService"/>
+
+
+
+</fragment>

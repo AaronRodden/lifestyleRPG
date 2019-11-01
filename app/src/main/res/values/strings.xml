@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">lifeStyleRPG</string>
     <string name="title_activity_maps">Map</string>
+    <string name="start_location">Track Location</string>
+    <string name="stop_location">Stop</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="app_title">Life Tracker RPG</string>
 </resources>
