@@ -79,10 +79,12 @@ public class LocationService extends Service {
         }
     }
 
-    public void sendMessage(){
+    public void sendMessage(Double lat, Double lon){
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
         Intent intent = new Intent("sample-event");
-        intent.putExtra("message", "hello");
+        //intent.putExtra("message", "lat: " + lat + " lon: " + lon);
+        intent.putExtra("lat", lat);
+        intent.putExtra("lon", lon);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -100,7 +102,7 @@ public class LocationService extends Service {
                 lat_new = location.getLatitude();
                 lon_new = location.getLongitude();
                 Log.v("location-service", "Location changed " + lat_new + " " + lon_new);
-                sendMessage();
+                sendMessage(lat_new, lon_new);
             }
         }
 

@@ -11,13 +11,9 @@ import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import android.os.PersistableBundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +22,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -33,7 +31,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
-    private GoogleMap mMap;
+    public static GoogleMap mMap;
     private static LatLng point1 = new LatLng(51.5, -0.1);
     private static LatLng point2 = new LatLng(40.7, -74.0);
     private static LatLng[] endpoints = {point1, point2};
@@ -45,6 +43,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Button locationButton;
     String locButt_text;
     Intent locationIntent;
+
+    //for tracking user.
+    public static Circle player_pos;
+    public static CircleOptions circle_properties;
 
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
@@ -67,6 +69,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Register this activity to receive messages
         //So actions with "sample-event" are found
         LocalBroadcastManager.getInstance(this).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
+
+        circle_properties = new CircleOptions()
+                .radius(10000)
+                .strokeColor(Color.RED)
+                .fillColor(Color.BLUE);
     }
 
     //This method is called when the activity is going to be destroyed, not paused
@@ -99,19 +106,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        /*mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        /*mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-            int count = 0;
-            @Override
-            public void onMapClick(LatLng latLng) {
-                latlog[count]= latLng;
-                count++;
-            }
-        });*/
         mMap.setOnMapClickListener((LatLng latlng) -> {
             MapsActivity.setEndpoint(latlng);
             });
+        */
+        //initialize player pos
+        //get a previous position from a view model
+        //don't track until they press the button.
+        //player_pos = mMap.addCircle(circle_properties);
+
         Polyline line = mMap.addPolyline(new PolylineOptions()
             .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
             .width(5)
@@ -150,10 +155,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Below methods will interact with the maps activity.
      */
     private static BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
+
         @Override
         public void onReceive(Context context, Intent intent) {
-            String message = intent.getStringExtra("message");
-            Log.d("receiver", "Got message: " + message);
+            double lat = intent.getDoubleExtra("lat", 0.0);
+            double lon = intent.getDoubleExtra("lon", 0.0);
+
+            LatLng pos = new LatLng(lat,lon);
+            //if play_pos is initialized on the map remove it.
+            if(player_pos != null){
+                player_pos.remove();
+            }
+
+
+
+            //Log.d("receiver", "Got message: " + message);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(pos));
+            player_pos = mMap.addCircle(circle_properties.center(pos));
         }
     };
 
