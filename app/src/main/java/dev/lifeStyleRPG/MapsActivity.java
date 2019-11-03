@@ -38,7 +38,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static int count = 0;
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
-    mapsViewModel viewModel;
+    public static mapsViewModel viewModel;
 
     Button locationButton;
     String locButt_text;
@@ -46,7 +46,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     //for tracking user.
     public static Circle player_pos;
-    public static CircleOptions circle_properties;
+    public static CircleOptions circle_properties = new CircleOptions()
+                .radius(20f)
+                .strokeWidth(3f)
+                .strokeColor(Color.RED)
+                .fillColor(Color.BLUE);
 
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
@@ -58,7 +62,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-
         //initialize the locationButton
         locationButton = findViewById(R.id.MapsLocationButton);
         //set up the viewModel class, bind it to this activity
@@ -69,11 +72,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Register this activity to receive messages
         //So actions with "sample-event" are found
         LocalBroadcastManager.getInstance(this).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
-
-        circle_properties = new CircleOptions()
-                .radius(10000)
-                .strokeColor(Color.RED)
-                .fillColor(Color.BLUE);
     }
 
     //This method is called when the activity is going to be destroyed, not paused
@@ -104,14 +102,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         Log.e("MapsActivity", "onMapREady");
         mMap = googleMap;
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        /*mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-        mMap.setOnMapClickListener((LatLng latlng) -> {
-            MapsActivity.setEndpoint(latlng);
-            });
-        */
+
+        //5 is landmass/continent, 15 is streets
+        mMap.setMinZoomPreference(10);
         //initialize player pos
         //get a previous position from a view model
         //don't track until they press the button.
@@ -123,6 +116,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             .color(Color.RED));
     }
 
+    /**
+     *Method for starting Location Service
+     * Maybe for the text, we'll check if the service is active instead of relying on string.
+     * Since if the activity is cut short before the view model is set, then there might be problems
+     *https://stackoverflow.com/questions/600207/how-to-check-if-a-service-is-running-on-android
+     * i'll implement that later
+     */
     public void startLocationService(View view) {
         //this is the location button on maps
         locationButton = (Button) view;
@@ -166,11 +166,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(player_pos != null){
                 player_pos.remove();
             }
-
-
-
             //Log.d("receiver", "Got message: " + message);
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(pos));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
             player_pos = mMap.addCircle(circle_properties.center(pos));
         }
     };
