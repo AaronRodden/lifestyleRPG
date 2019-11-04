@@ -10,6 +10,7 @@
 
     <Button
         android:id="@+id/MapsLocationButton"
+        android:fontFamily="@font/fontmenu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center|bottom"
@@ -22,6 +23,22 @@
         android:paddingRight="10dp"
         android:text="@string/start_location"
         android:onClick="startLocationService"/>
+
+    <Button
+        android:id="@+id/MenuButton"
+        android:fontFamily="@font/fontmenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="20dp"
+        android:alpha=".75"
+        android:background="#95296643"
+        android:backgroundTint="#95296643"
+        android:padding="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="@string/menu_btn"
+        />
 
 
 
