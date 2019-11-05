@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.LinkedList;
 import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
@@ -157,24 +158,72 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    // start making a new trail
     public static void startTrail(String name) {
-        viewModel.resetTrail();
-        viewModel.setTrailName(name);
-        viewModel.setMakingTrail(true);
-        currentTrailOptions.visible(true);
+        if(name.isEmpty()) {
+            Log.e("maps-viewmodel", "You must specify a trail name!");
+        } else if(viewModel.isMakingTrail()) {
+            Log.e("maps-viewmodel", "You cannot blaze two trails at once!");
+        } else if(!viewModel.getRunningTrailName().isEmpty()) {
+            Log.e("maps-viewmodel", "You cannot blaze a new trail while running an existing trail!");
+        } else {
+            viewModel.resetTrail();
+            viewModel.setTrailName(name);
+            viewModel.setMakingTrail(true);
+            currentTrailOptions.visible(true);
+        }
     }
 
-    // discards the current trail
+    // discards the trail being made
     public static void discardTrail() {
         viewModel.setMakingTrail(false);
         viewModel.deleteTrail(viewModel.getTrailName());
+        currentTrail.remove();
         currentTrailOptions.visible(false);
     }
 
+    // ends the new trail and adds it to the list of existing trails
     public static void endTrail() {
         viewModel.setMakingTrail(false);
         viewModel.stashTrail();
+        currentTrail.remove();
         currentTrailOptions.visible(false);
+    }
+
+    // for when the user starts running an existing trail
+    public static void runTrail(String name) {
+        LinkedList<LatLng> toRun = viewModel.getExistingTrail(name);
+        if(name.isEmpty()) {
+            Log.e("maps-viewmodel", "You must specify a trail name!");
+        } else if(toRun == null) {
+            Log.e("maps-viewmodel", "Trail: " + name + " does not exist!");
+        } else if(viewModel.isMakingTrail()) {
+            Log.e("maps-viewmodel", "You cannot run a trail while blazing a new one!");
+        } else if(!viewModel.getRunningTrailName().isEmpty()) {
+            Log.e("maps-viewmodel", "You must abandon your current trail before running a new one!");
+        } else {
+            viewModel.setRunningTrail(name);
+            currentTrailOptions.visible(true);
+            currentTrail = mMap.addPolyline(currentTrailOptions);
+            currentTrail.setPoints(toRun);
+        }
+    }
+
+    // for when the user stops/leaves the trail without completing it
+    public static void abandonTrail() {
+        viewModel.setRunningTrail("");
+        currentTrailOptions.visible(false);
+        currentTrail.remove();
+    }
+
+    // for when the user actually completes a trail
+    // there isn't much difference between this and the previous method
+    // since we have to way to see if the user in actually running
+    // the trail
+    public static void completeTrail() {
+        viewModel.setRunningTrail("");
+        currentTrailOptions.visible(false);
+        currentTrail.remove();
     }
 
     /*
@@ -198,7 +247,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
             player_pos = mMap.addCircle(circle_properties.center(pos));
 
-            // add new point every 4 meters
+            // add new point every 4 meters and rerender the trail
             if(viewModel.isMakingTrail() && (viewModel.getLastPos() == null
                     || getDistance(pos, viewModel.getLastPos()) > 4)) {
                 if(currentTrail != null) {
@@ -207,6 +256,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 viewModel.appendToTrail(pos);
                 currentTrail = mMap.addPolyline(currentTrailOptions);
                 currentTrail.setPoints(viewModel.getTrail());
+            }
+
+            // render running trail if it hasn't already been
+            if(currentTrail == null && !viewModel.getRunningTrailName().isEmpty()) {
+                currentTrail = mMap.addPolyline(currentTrailOptions);
+                currentTrail.setPoints(viewModel
+                        .getExistingTrail(viewModel.getRunningTrailName()));
             }
         }
     };

@@ -11,6 +11,8 @@ import java.util.LinkedList;
 public class mapsViewModel extends ViewModel {
     private String current_text = "Track Location" ;
     private String newTrailName = "";
+    private String runningTrailName = "";
+    private LinkedList<LatLng> runningTrail = new LinkedList<>();
     private boolean makingTrail = false;
     private LinkedList<LatLng> newTrail = new LinkedList<>();
     private HashMap<String, LinkedList<LatLng>> trails = new HashMap<>();
@@ -21,6 +23,18 @@ public class mapsViewModel extends ViewModel {
 
     public void setString(String s){
         current_text = s;
+    }
+
+    public void setRunningTrail(String name) {
+        runningTrailName = name;
+    }
+
+    public String getRunningTrailName() {
+        return runningTrailName;
+    }
+
+    public LinkedList<LatLng> getExistingTrail(String name) {
+        return trails.get(name);
     }
 
     // I don't know if these actually need to be synchronized; it sounds like the location
