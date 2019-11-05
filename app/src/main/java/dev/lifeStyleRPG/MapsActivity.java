@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
@@ -28,6 +29,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+
+import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
@@ -51,6 +54,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .strokeWidth(3f)
                 .strokeColor(Color.RED)
                 .fillColor(Color.BLUE);
+    public static Polyline currentTrail;
+    public static PolylineOptions currentTrailOptions = new PolylineOptions()
+                .visible(false)
+                .width(3);
 
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
@@ -150,6 +157,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    public static void startTrail(String name) {
+        viewModel.resetTrail();
+        viewModel.setTrailName(name);
+        viewModel.setMakingTrail(true);
+        currentTrailOptions.visible(true);
+    }
+
+    // discards the current trail
+    public static void discardTrail() {
+        viewModel.setMakingTrail(false);
+        viewModel.deleteTrail(viewModel.getTrailName());
+        currentTrailOptions.visible(false);
+    }
+
+    public static void endTrail() {
+        viewModel.setMakingTrail(false);
+        viewModel.stashTrail();
+        currentTrailOptions.visible(false);
+    }
+
     /*
     BroadCast receiver to interact with a local broadcast manasger from Location Service.
     Below methods will interact with the maps activity.
@@ -166,11 +193,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(player_pos != null){
                 player_pos.remove();
             }
+
             //Log.d("receiver", "Got message: " + message);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
             player_pos = mMap.addCircle(circle_properties.center(pos));
+
+            // add new point every 4 meters
+            if(viewModel.isMakingTrail() && (viewModel.getLastPos() == null
+                    || getDistance(pos, viewModel.getLastPos()) > 4)) {
+                if(currentTrail != null) {
+                    currentTrail.remove();
+                }
+                viewModel.appendToTrail(pos);
+                currentTrail = mMap.addPolyline(currentTrailOptions);
+                currentTrail.setPoints(viewModel.getTrail());
+            }
         }
     };
 
+    // couldn't find any method to get the distance between 2 LatLng's so
+    // we gotta do something jank
+    private static double getDistance(LatLng a, LatLng b) {
+        Location locA = new Location("a");
+        locA.setLatitude(a.latitude);
+        locA.setLongitude(a.longitude);
+        Location locB = new Location("b");
+        locB.setLatitude(b.latitude);
+        locB.setLongitude(b.longitude);
 
+        return locA.distanceTo(locB);
+    }
 }
