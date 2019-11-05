@@ -15,6 +15,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "1013088912080-374fsrn1ekatpuop6mhu50qpq4g8knjm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.lifeStyleRPG",
+            "certificate_hash": "544f9d9b07e8c7580cb20850194a03888bf53b40"
+          }
+        },
+        {
+          "client_id": "1013088912080-43teu4f2frhgo4jp6cpdg2hh1nkkmhee.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.lifeStyleRPG",
+            "certificate_hash": "67271577edc432ac9e3f54de13340e9d09df30bc"
+          }
+        },
+        {
           "client_id": "1013088912080-i0gpg0cndhh4c84os0d274eqkn47nhep.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
