@@ -1,45 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/map"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
-    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MapsActivity" >
+    android:layout_width="match_parent"
+    android:background="@color/blueish">
 
-    <Button
-        android:id="@+id/MapsLocationButton"
-        android:fontFamily="@font/fontmenu"
-        android:layout_width="wrap_content"
+    <!--Handy tip if you're wondering why layout_height is 0dp, if you have some constraint
+    then it'll automatically match that constraint. So I have a height constraint listed below,
+    and I want the height to dynamically match it, wooo so just set it to 0dp-->
+    <fragment xmlns:map="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        map:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
+        map:layout_constraintTop_toTopOf="parent"
+        tools:context=".MapsActivity">
+
+        <Button
+            android:id="@+id/MapsLocationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|bottom"
+            android:layout_marginBottom="20dp"
+            android:alpha=".75"
+            android:background="#95296643"
+            android:backgroundTint="#95296643"
+            android:fontFamily="@font/fontmenu"
+            android:onClick="startLocationService"
+            android:padding="10dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/start_location" />
+    </fragment>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center|bottom"
-        android:layout_marginBottom="20dp"
-        android:alpha=".75"
-        android:background="#95296643"
-        android:backgroundTint="#95296643"
-        android:padding="10dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:text="@string/start_location"
-        android:onClick="startLocationService"/>
-
-    <Button
-        android:id="@+id/MenuButton"
-        android:fontFamily="@font/fontmenu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="20dp"
-        android:alpha=".75"
-        android:background="#95296643"
-        android:backgroundTint="#95296643"
-        android:padding="10dp"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:text="@string/menu_btn"
-        />
-
-
-
-</fragment>
+        app:itemBackground="@color/blueish"
+        app:itemIconTint="@android:color/white"
+        app:itemTextColor="@android:color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/menu"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

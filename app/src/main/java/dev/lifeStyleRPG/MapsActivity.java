@@ -6,14 +6,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
-import android.os.PersistableBundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -25,6 +24,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
@@ -52,6 +52,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationButton = findViewById(R.id.MapsLocationButton);
         viewModel = ViewModelProviders.of(this).get(mapsViewModel.class);
         locationButton.setText(viewModel.get_current_text());
+
+        //bottom navigation.
+        BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()){
+                    case R.id.maps_screen:
+                        Intent maps_activity = new Intent(getApplicationContext(), MapsActivity.class);
+                        startActivity(maps_activity);
+                        break;
+                    case R.id.player_profile_screen:
+                       break;
+                    case R.id.settings_screen:
+                        break;
+                    case R.id.menu_screen:
+                        break;
+                }
+                return true;
+            }
+        });
     }
 
     public static void setEndpoint(final LatLng latLng) {

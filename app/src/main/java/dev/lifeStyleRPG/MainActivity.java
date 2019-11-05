@@ -24,10 +24,10 @@ public class MainActivity extends AppCompatActivity {
         Button loginbtn = (Button)findViewById(R.id.loginbtn);
         FirebaseUser currentUser = mAuth.getCurrentUser();
         btn.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            startActivity(new Intent(MainActivity.this, RegisterScreen.class));
-            }
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, RegisterScreen.class));
+                }
         });
 
         loginbtn.setOnClickListener(new View.OnClickListener() {
@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, LoginScreen.class));
             }
         });
-
 
     }
 
