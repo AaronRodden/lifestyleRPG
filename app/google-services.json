@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1013088912080-i0gpg0cndhh4c84os0d274eqkn47nhep.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.lifeStyleRPG",
+            "certificate_hash": "857b7c6b566c5748954a3cbc3fc5cde7ab0c76bf"
+          }
+        },
+        {
           "client_id": "1013088912080-52d9s9b06haiglrldf7itjl672j2ijbi.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
