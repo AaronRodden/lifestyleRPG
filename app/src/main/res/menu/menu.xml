@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/maps_screen"
+        android:enabled="true"
+        android:title="Maps"
+        android:icon="@drawable/illustration"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_screen"
+        android:enabled="true"
+        android:title="Menu"
+        android:icon="@drawable/illustration"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/player_profile_screen"
+        android:enabled="true"
+        android:title="Profile"
+        android:icon="@drawable/illustration"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/settings_screen"
+        android:enabled="true"
+        android:title="Settings"
+        android:icon="@drawable/illustration"
+        app:showAsAction="ifRoom" />
+</menu>
