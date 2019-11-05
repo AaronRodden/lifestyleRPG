@@ -39,7 +39,6 @@ public class LocationService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
-
     @Override
     public void onDestroy(){
         Log.d("location-service", "on-Destroy");
