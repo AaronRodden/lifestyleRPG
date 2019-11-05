@@ -146,12 +146,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
             } else {
                 startService(locationIntent);
+                startTrail("test-trail");
                 Log.d("startloc", "start service");
                 locationButton.setText(R.string.stop_location);
                 viewModel.setString(getResources().getString(R.string.stop_location));
             }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
+            endTrail();
             stopService(locationIntent);
             viewModel.setString(getResources().getString(R.string.start_location));
             locationButton.setText(R.string.start_location);
