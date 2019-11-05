@@ -12,10 +12,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 
-import androidx.core.app.ActivityCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.util.Log;
-import android.widget.Toast;
 
 public class LocationService extends Service {
     //location manager
@@ -32,12 +31,14 @@ public class LocationService extends Service {
     private Runnable rt;
     Intent intent;
 
+    //for communicating with maps activity
+    LocalBroadcastManager localBroadcastManager;
+
 
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
-
     @Override
     public void onDestroy(){
         Log.d("location-service", "on-Destroy");
@@ -55,8 +56,10 @@ public class LocationService extends Service {
         this.intent = intent;
         //start the thread which will track location
         rt = new Runnable() {
+            @Override
             public void run() {
                 location();
+                handler.postDelayed(rt, 5000);
             }
         };
         handler.post(rt);
@@ -71,14 +74,25 @@ public class LocationService extends Service {
                 != PackageManager.PERMISSION_GRANTED) {
                 Log.e("location-service", "user did not grant permission");
         }else{
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
         }
     }
 
-    //we want to override onLocation changed function, plus do stuff within this class
-    private class myLocationListener implements LocationListener{
-        double lat_new,lon_new;
+    public void sendMessage(Double lat, Double lon){
+        localBroadcastManager = LocalBroadcastManager.getInstance(this);
+        Intent intent = new Intent("sample-event");
+        //intent.putExtra("message", "lat: " + lat + " lon: " + lon);
+        intent.putExtra("lat", lat);
+        intent.putExtra("lon", lon);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
 
+    //we want to override onLocation changed function, plus do stuff within this class
+    private class myLocationListener implements LocationListener {
+        double lat_new,lon_new;
+        /*
+        These are Location Listener methods
+         */
         @Override
         public void onLocationChanged(Location location) {
             //log the latitude and long
@@ -87,23 +101,19 @@ public class LocationService extends Service {
                 lat_new = location.getLatitude();
                 lon_new = location.getLongitude();
                 Log.v("location-service", "Location changed " + lat_new + " " + lon_new);
+                sendMessage(lat_new, lon_new);
             }
-
         }
 
         @Override
         public void onStatusChanged(String s, int i, Bundle bundle) {
-
         }
-
         @Override
         public void onProviderEnabled(String s) {
-
         }
-
         @Override
         public void onProviderDisabled(String s) {
-
         }
+
     }
 }
