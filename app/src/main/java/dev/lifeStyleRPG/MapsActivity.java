@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProviders;
@@ -17,6 +18,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.os.PersistableBundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
@@ -30,16 +32,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
     public static GoogleMap mMap;
-    private static LatLng point1 = new LatLng(51.5, -0.1);
-    private static LatLng point2 = new LatLng(40.7, -74.0);
-    private static LatLng[] endpoints = {point1, point2};
-    private static int count = 0;
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
     public static mapsViewModel viewModel;
@@ -64,6 +63,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("MapsAcvitity", "onCreate");
+
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -75,31 +76,62 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //set up the viewModel class, bind it to this activity
         viewModel = ViewModelProviders.of(this).get(mapsViewModel.class);
         //set text of location button from viewmodel
-        locationButton.setText(viewModel.get_current_text());
 
         //Register this activity to receive messages
         //So actions with "sample-event" are found
         LocalBroadcastManager.getInstance(this).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
+
+        //bottom Navigation
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.maps_screen:
+                        break;
+                    case R.id.player_profile_screen:
+                        break;
+                    case R.id.trails_screen:
+                        Intent trailsIntent = new Intent(getApplicationContext(),Trails.class);
+                        startActivity(trailsIntent);
+                        break;
+                    case R.id.settings_screen:
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+    //Save the fragment's state when leaving. This happens when onPause is called
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
     @Override
     protected void onResume(){
         super.onResume();
+        Log.e("MapsAcvitity", "onResume");
+        Log.d("MapsActivity", viewModel.get_current_text());
+        locationButton.setText(viewModel.get_current_text());
     }
 
-
+    //User pauses the activity, like goes on to a different activity.
+    //As long as they don't press the button, we still need to save and track location
+    //When they come back all the stuff should still be here
+    @Override
+    protected void onPause(){
+        super.onPause();
+        Log.e("MapsAcvitity", "onPause" + locButt_text);
+        viewModel.setString(locButt_text);
+    }
     //This method is called when the activity is going to be destroyed, not paused
     //This should save state of the activity, send data to firebase etc.
     @Override
     protected void onDestroy(){
+        super.onDestroy();
+        Log.e("MapsAcvitity", "onDestroy");
         //unregister the listener
         LocalBroadcastManager.getInstance(this).unregisterReceiver(myBroadcastReceiver);
-        super.onDestroy();
-    }
-
-    public static void setEndpoint(final LatLng latLng) {
-        endpoints[count] = latLng;
-        ++count;
-        count %= 2;
     }
 
     /**
@@ -147,6 +179,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startService(locationIntent);
                 startTrail("test-name");
                 Log.d("startloc", "start service");
+                locButt_text = getResources().getString(R.string.stop_location);
                 locationButton.setText(R.string.stop_location);
                 viewModel.setString(getResources().getString(R.string.stop_location));
             }
@@ -156,6 +189,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             stopService(locationIntent);
             viewModel.setString(getResources().getString(R.string.start_location));
             locationButton.setText(R.string.start_location);
+            locButt_text = getResources().getString(R.string.start_location);
         }
     }
 
