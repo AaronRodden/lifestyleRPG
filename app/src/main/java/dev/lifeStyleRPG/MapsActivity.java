@@ -81,6 +81,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //So actions with "sample-event" are found
         LocalBroadcastManager.getInstance(this).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
     }
+    @Override
+    protected void onResume(){
+        super.onResume();
+    }
+
 
     //This method is called when the activity is going to be destroyed, not paused
     //This should save state of the activity, send data to firebase etc.
@@ -108,15 +113,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.e("MapsActivity", "onMapREady");
+        Log.e("MapsActivity", "onMapReady");
         mMap = googleMap;
-
-
-
-        Polyline line = mMap.addPolyline(new PolylineOptions()
-            .add(new LatLng(51.5, -0.1), new LatLng(40.7, -74.0))
-            .width(5)
-            .color(Color.RED));
+        /*Get last known coordinates*/
+        if(viewModel.getLastPos() != null)
+            player_pos = mMap.addCircle(circle_properties.center(viewModel.getLastPos()));
+        if(viewModel.getTrail() != null)
+            currentTrail = mMap.addPolyline(currentTrailOptions);
+            currentTrail.setPoints(viewModel.getTrail());
     }
 
     /**
@@ -192,10 +196,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if(player_pos != null){
                 player_pos.remove();
             }
-
             //Log.d("receiver", "Got message: " + message);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
             player_pos = mMap.addCircle(circle_properties.center(pos));
+            viewModel.setPlayerPos(pos);
 
             // add new point every 4 meters
             if(viewModel.isMakingTrail() && (viewModel.getLastPos() == null

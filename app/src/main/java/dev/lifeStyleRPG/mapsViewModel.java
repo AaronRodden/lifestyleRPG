@@ -10,6 +10,7 @@ import java.util.LinkedList;
 
 public class mapsViewModel extends ViewModel {
     private String current_text = "Track Location" ;
+    private LatLng current_loc;
     private String newTrailName = "";
     private boolean makingTrail = false;
     private LinkedList<LatLng> newTrail = new LinkedList<>();
@@ -22,6 +23,9 @@ public class mapsViewModel extends ViewModel {
     public void setString(String s){
         current_text = s;
     }
+
+    public void setPlayerPos(LatLng pos) {current_loc = pos;}
+    public LatLng getPlayerPos() {return current_loc;}
 
     // I don't know if these actually need to be synchronized; it sounds like the location
     // service runs in a separated thread? But it all goes through our main maps activity
