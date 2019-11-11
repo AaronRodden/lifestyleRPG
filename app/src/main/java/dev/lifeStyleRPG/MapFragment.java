@@ -23,21 +23,19 @@ import android.widget.Button;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
-    View mapView;
-    public static GoogleMap mMap;
-    Bundle savedState;
+import java.util.ArrayList;
 
+public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
+    public static View mapView;
+    public static GoogleMap mMap;
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
     public static mapsViewModel viewModel;
@@ -58,8 +56,47 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             .visible(false)
             .width(3);
 
+    /**
+     * Next few Overrides deal with saving the state of the fragment.
+     * Currently rotating will save the fragment state correctly
+     * Leaving the activity and saving the fragment state is a TODO
+     */
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+        super.onActivityCreated(savedInstanceState);
+       //restore fragment state here
+        if(savedInstanceState != null){
+            viewModel.setString(savedInstanceState.getString("button_txt"));
+            //If we come back from a pause or something, and they didn't stop the trail
+            //we must populate the view model again.
+            Log.e("Fragment", savedInstanceState.getParcelableArrayList("trail").toString());
+            if (savedInstanceState.getBoolean("isMaking") == true){
+                continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
+            }
+            viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
+        }
+    }
+    @Override
+    public void onSaveInstanceState(Bundle outState){
+        super.onSaveInstanceState(outState);
+        outState.putString("button_txt", viewModel.get_current_text());
+        ArrayList<LatLng> tmp = viewModel.getTrail();
+        outState.putParcelableArrayList("trail", tmp);
+        outState.putString("trail_name", viewModel.getTrailName());
+        outState.putBoolean("isMaking", viewModel.isMakingTrail());
+        outState.putParcelable("last_pos", viewModel.getLastPos());
+    }
+
+    //Note, with this logic, this is only called once. These should be initializers
+    //Only called again when the fragment is destroyed.
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+        Log.e("MapsFragment", "onCreate");
         mapView = inflater.inflate(R.layout.fragment_map, null);
 
         //initialize the locationButton
@@ -72,26 +109,37 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         //Register this activity to receive messages
         //So actions with "sample-event" are found
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
-
         return mapView;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        Log.e("MapsFragment", "onResume");
+        locationButton.setText(viewModel.get_current_text());
         SupportMapFragment smf = ((SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map));
-
         smf.getMapAsync(this);
     }
-
     @Override
     public void onDestroy(){
         super.onDestroy();
-        Log.e("MapsAcvitity", "onDestroy");
+        Log.e("MapsFragment", "onDestroy");
         //unregister the listener
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(myBroadcastReceiver);
     }
 
+
+    /**
+     * Register onclick listeners here. This is how to do it with a fragment
+     */
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()){
+            case R.id.MapsLocationButton:
+                startLocationService(view);
+                break;
+        }
+    }
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
@@ -103,8 +151,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.e("MapsActivity", "onMapReady");
+        Log.e("MapsFragment", "onMapReady");
         mMap = googleMap;
+        locationButton.setText(viewModel.get_current_text());
         /*Get last known coordinates*/
         if(viewModel.getLastPos() != null)
             player_pos = mMap.addCircle(circle_properties.center(viewModel.getLastPos()));
@@ -151,12 +200,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         }
     }
 
-
+    //Start trail
     public static void startTrail(String name) {
         viewModel.resetTrail();
         viewModel.setTrailName(name);
         viewModel.setMakingTrail(true);
         currentTrailOptions.visible(true);
+    }
+    //start trail from a pause
+    public static void continueTrail(String name, ArrayList<LatLng> prefix){
+        viewModel.resetTrail();
+        viewModel.setTrailName(name);
+        viewModel.setTrail(prefix);
+        viewModel.setMakingTrail(true);
+        currentTrailOptions.visible(true);
+
     }
 
     // discards the current trail
@@ -219,13 +277,5 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         return locA.distanceTo(locB);
     }
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.MapsLocationButton:
-                Log.e("fragment", "DOOODD");
-                startLocationService(view);
-                break;
-        }
-    }
+
 }

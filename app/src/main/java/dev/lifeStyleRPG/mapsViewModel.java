@@ -5,16 +5,16 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 
 public class mapsViewModel extends ViewModel {
     private String current_text = "Track Location" ;
     private LatLng current_loc;
     private String newTrailName = "";
     private boolean makingTrail = false;
-    private LinkedList<LatLng> newTrail = new LinkedList<>();
-    private HashMap<String, LinkedList<LatLng>> trails = new HashMap<>();
+    private ArrayList<LatLng> newTrail = new ArrayList<>();
+    private HashMap<String, ArrayList<LatLng>> trails = new HashMap<>();
 
     public String get_current_text(){
         return current_text;
@@ -31,7 +31,7 @@ public class mapsViewModel extends ViewModel {
     // service runs in a separated thread? But it all goes through our main maps activity
     // so idk
     public synchronized void resetTrail() {
-        newTrail = new LinkedList<>();
+        newTrail = new ArrayList<>();
         // info logs?
         Log.i("maps-viewmodel", "Trail reset");
     }
@@ -61,7 +61,7 @@ public class mapsViewModel extends ViewModel {
         return newTrailName;
     }
 
-    public LinkedList<LatLng> getTrail() {
+    public ArrayList<LatLng> getTrail() {
         return newTrail;
     }
 
@@ -74,8 +74,11 @@ public class mapsViewModel extends ViewModel {
         // verbose logs?
         Log.v("maps-viewmodel", "Added new point to trail");
     }
+    public void setTrail(ArrayList<LatLng> prefix){
+        newTrail = new ArrayList<>(prefix);
+    }
 
     public LatLng getLastPos() {
-        return newTrail.peekLast();
+        return newTrail.size() == 0 ? null : newTrail.get(newTrail.size() - 1);
     }
 }

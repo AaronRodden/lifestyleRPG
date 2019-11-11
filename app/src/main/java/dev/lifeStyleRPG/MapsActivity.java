@@ -1,46 +1,17 @@
 package dev.lifeStyleRPG;
 
-import android.Manifest;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.location.Location;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import android.os.PersistableBundle;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.util.Locale;
-
 public class MapsActivity extends AppCompatActivity{
+    MapFragment mapFragment;
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,12 +19,25 @@ public class MapsActivity extends AppCompatActivity{
         Log.d("MapsAcvitity", "onCreate");
 
         setContentView(R.layout.activity_maps);
+
+
+        /**
+         * TODO, currently deals with state changes within the activity, when leaving activity
+         * it is desired to save the information on the map, especially when the user is still tracking
+         * location. Fragment's OnPause is called, therefore we are still able to obtain updates from
+         * the location service.
+         */
+        if (savedInstanceState != null){
+            Log.e("MapsActivity", "savedInstance not null");
+            mapFragment = (MapFragment) getSupportFragmentManager().getFragment(savedInstanceState,"maps_fragment");
+        }else {
+            Log.e("MapsActivity", "savedInstance null!");
+            mapFragment = new MapFragment();
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.add(R.id.map_container, mapFragment);
+            fragmentTransaction.commit();
+        }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        MapFragment mapFragment = new MapFragment();
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.map_container, mapFragment);
-        fragmentTransaction.commit();
-        //bottom Navigation
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -78,6 +62,9 @@ public class MapsActivity extends AppCompatActivity{
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.e("MapsAcvitity", "onSaveInstance");
+            //Save the fragment's instance
+        getSupportFragmentManager().putFragment(outState, "maps_fragment", mapFragment);
     }
     @Override
     protected void onResume(){
@@ -90,6 +77,7 @@ public class MapsActivity extends AppCompatActivity{
     @Override
     protected void onPause(){
         super.onPause();
+        Log.e("MapsActivity", "OnPause");
     }
     //This method is called when the activity is going to be destroyed, not paused
     //This should save state of the activity, send data to firebase etc.
