@@ -120,6 +120,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         SupportMapFragment smf = ((SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map));
         smf.getMapAsync(this);
     }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        //remove duplicate player pos
+        player_pos.remove();
+    }
     @Override
     public void onDestroy(){
         super.onDestroy();
