@@ -1,10 +1,12 @@
 package dev.lifeStyleRPG;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import android.util.Log;
 import android.view.MenuItem;
@@ -12,6 +14,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MapsActivity extends AppCompatActivity{
     MapFragment mapFragment;
+
+    FragmentManager manager = getSupportFragmentManager();
+    public static final int REQUESTCODE = 1;
+
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,11 +35,11 @@ public class MapsActivity extends AppCompatActivity{
          */
         if (savedInstanceState != null){
             Log.e("MapsActivity", "savedInstance not null");
-            mapFragment = (MapFragment) getSupportFragmentManager().getFragment(savedInstanceState,"maps_fragment");
+            mapFragment = (MapFragment) manager.getFragment(savedInstanceState,"maps_fragment");
         }else {
             Log.e("MapsActivity", "savedInstance null!");
             mapFragment = new MapFragment();
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            FragmentTransaction fragmentTransaction = manager.beginTransaction();
             fragmentTransaction.add(R.id.map_container, mapFragment);
             fragmentTransaction.commit();
         }
@@ -49,7 +55,7 @@ public class MapsActivity extends AppCompatActivity{
                         break;
                     case R.id.trails_screen:
                         Intent trailsIntent = new Intent(getApplicationContext(),Trails.class);
-                        startActivity(trailsIntent);
+                        startActivityForResult(trailsIntent, REQUESTCODE);
                         break;
                     case R.id.settings_screen:
                         break;
@@ -64,7 +70,23 @@ public class MapsActivity extends AppCompatActivity{
         super.onSaveInstanceState(outState);
         Log.e("MapsAcvitity", "onSaveInstance");
             //Save the fragment's instance
-        getSupportFragmentManager().putFragment(outState, "maps_fragment", mapFragment);
+        outState.putBoolean("started", true);
+        manager.putFragment(outState, "maps_fragment", mapFragment);
+    }
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState){
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        if (requestCode == REQUESTCODE){
+            if(resultCode == Activity.RESULT_OK){
+                Log.e("MapsActivity", "There is some result from trails activity");
+            }
+            if(resultCode == Activity.RESULT_CANCELED){
+                Log.e("MapsActivity", "No result from trails activity");
+            }
+        }
     }
     @Override
     protected void onResume(){
