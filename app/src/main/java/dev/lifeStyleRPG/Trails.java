@@ -18,12 +18,13 @@ public class Trails extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_trails);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.getMenu().findItem(R.id.trails_screen).setChecked(true);
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
                 switch(menuItem.getItemId()){
                     case R.id.maps_screen:
-                        Intent mapsIntent = new Intent();
+                        Intent mapsIntent = new Intent(getApplicationContext(),MapsActivity.class);
                         mapsIntent.putExtra("result", "hello");
                         setResult(Activity.RESULT_OK, mapsIntent);
                         //don't send any data
@@ -40,5 +41,16 @@ public class Trails extends AppCompatActivity {
                 return true;
             }
         });
+    }
+    @Override
+    protected void onPause(){
+        super.onPause();
+        Log.e("Trails", "On Pause");
+    }
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        Log.e("Trails", "On Destroy");
+
     }
 }

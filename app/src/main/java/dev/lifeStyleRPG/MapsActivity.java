@@ -17,6 +17,7 @@ public class MapsActivity extends AppCompatActivity{
 
     FragmentManager manager = getSupportFragmentManager();
     public static final int REQUESTCODE = 1;
+    BottomNavigationView bottomNavigationView;
 
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
@@ -44,7 +45,7 @@ public class MapsActivity extends AppCompatActivity{
             fragmentTransaction.commit();
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
@@ -91,6 +92,7 @@ public class MapsActivity extends AppCompatActivity{
     @Override
     protected void onResume(){
         super.onResume();
+        bottomNavigationView.getMenu().findItem(R.id.maps_screen).setChecked(true);
     }
 
     //User pauses the activity, like goes on to a different activity.

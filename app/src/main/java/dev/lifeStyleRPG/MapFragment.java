@@ -125,7 +125,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onPause(){
         super.onPause();
         //remove duplicate player pos
-        player_pos.remove();
+        if(player_pos != null)
+            player_pos.remove();
     }
     @Override
     public void onDestroy(){
