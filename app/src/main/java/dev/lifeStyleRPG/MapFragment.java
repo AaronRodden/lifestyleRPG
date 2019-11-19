@@ -34,25 +34,25 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import java.util.ArrayList;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
-    public static View mapView;
-    public static GoogleMap mMap;
+    private View mapView;
+    private static GoogleMap mMap;
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
-    public static mapsViewModel viewModel;
+    private static mapsViewModel viewModel;
 
     Button locationButton;
     String locButt_text;
     Intent locationIntent;
 
     //for tracking user.
-    public static Circle player_pos;
-    public static CircleOptions circle_properties = new CircleOptions()
+    private static Circle player_pos;
+    private static CircleOptions circle_properties = new CircleOptions()
             .radius(20f)
             .strokeWidth(3f)
             .strokeColor(Color.RED)
             .fillColor(Color.BLUE);
-    public static Polyline currentTrail;
-    public static PolylineOptions currentTrailOptions = new PolylineOptions()
+    private static Polyline currentTrail;
+    private static PolylineOptions currentTrailOptions = new PolylineOptions()
             .visible(false)
             .width(3);
 
