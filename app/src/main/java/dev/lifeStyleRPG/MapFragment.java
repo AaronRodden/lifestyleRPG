@@ -1,8 +1,10 @@
 package dev.lifeStyleRPG;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -22,7 +24,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -36,6 +40,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
@@ -62,6 +67,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
     Button locationButton;
     String locButt_text;
+    String trail_name;
     Intent locationIntent;
 
     //for tracking user.
@@ -89,6 +95,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     @Override
     public void onActivityCreated(Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
+        Log.e("MapsFragment", "onActivityCreated");
        //restore fragment state here
         if(savedInstanceState != null){
             viewModel.setString(savedInstanceState.getString("button_txt"));
@@ -96,6 +103,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             //we must populate the view model again.
             Log.e("Fragment", savedInstanceState.getParcelableArrayList("trail").toString());
             if (savedInstanceState.getBoolean("isMaking") == true){
+                trail_name=savedInstanceState.getString("trail_name");
                 continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
             }
             viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
@@ -140,6 +148,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         super.onResume();
         Log.e("MapsFragment", "onResume");
         locationButton.setText(viewModel.get_current_text());
+        trail_name = viewModel.getTrailName();
         SupportMapFragment smf = ((SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map));
         smf.getMapAsync(this);
     }
@@ -185,8 +194,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         Log.e("MapsFragment", "onMapReady");
         mMap = googleMap;
         locationButton.setText(viewModel.get_current_text());
-        /*Get last known coordinates*/
-        if(viewModel.getLastPos() != null)
+        /*Get last known coordinates, and i*/
+        if(viewModel.getLastPos() != null && player_pos == null)
             player_pos = mMap.addCircle(circle_properties.center(viewModel.getLastPos()));
         if(viewModel.getTrail() != null)
             currentTrail = mMap.addPolyline(currentTrailOptions);
@@ -206,7 +215,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         locButt_text = locationButton.getText().toString();
         locationIntent = new Intent(getActivity(), LocationService.class);
         if (locButt_text.equals(getResources().getString(R.string.start_location))){
-            Log.d("startLocationService", locButt_text);
             //ask for permissions.
             //need to still handle a deny request
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
@@ -214,18 +222,57 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 //if permissions aren't set, ask
                 ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
             } else {
-                getActivity().startService(locationIntent);
-                startTrail("test-name");
-                Log.d("startloc", "start service");
-                locButt_text = getResources().getString(R.string.stop_location);
-                locationButton.setText(R.string.stop_location);
-                viewModel.setString(getResources().getString(R.string.stop_location));
-            }
+
+                /**
+                 * Sets up insert trail name dialogue
+                 */
+                final EditText txtUrl = new EditText(getContext());
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Trail Name")
+                        .setView(txtUrl)
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            if(txtUrl.getText().toString().equals("") || txtUrl.getText() == null){
+                                Toast.makeText(getContext(),"Please enter a name", Toast.LENGTH_SHORT);
+                                return;
+                            }
+                            trail_name = txtUrl.getText().toString();
+                            Log.e("Fragment", "Hello why the fcuk");
+
+                            /**
+                            * Starts the location service
+                            */
+                            getActivity().startService(locationIntent);
+                            startTrail(trail_name);
+                            Log.e("startloc", "start service");
+                            locButt_text = getResources().getString(R.string.stop_location);
+                            locationButton.setText(R.string.stop_location);
+                            viewModel.setString(getResources().getString(R.string.stop_location));
+                            dialogInterface.dismiss();
+                        }
+                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.cancel();
+                        }
+                    }).show();
+                }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
             //To track the city name
             Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
             Map<String, Object> payload = new HashMap<>();
+            getActivity().stopService(locationIntent);
+
+            //Deals with the case if user starts and stops quickly
+            if(viewModel.getPlayerPos() == null){
+                viewModel.setString(getResources().getString(R.string.start_location));
+                locationButton.setText(R.string.start_location);
+                locButt_text = getResources().getString(R.string.start_location);
+                return;
+            }
+
             try {
                 List<Address> addresses = geocoder.getFromLocation(viewModel.getPlayerPos().latitude,viewModel.getPlayerPos().longitude,1);
                 String cityName = addresses.get(0).getAddressLine(0);
@@ -253,7 +300,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 payload.put("trailPoints","");
             }
 
-
+            //Adds in the payload
             fstore.collection("trails").
                     add(payload)
                     .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -269,7 +316,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                         }
                     });
             endTrail();
-            getActivity().stopService(locationIntent);
             viewModel.setString(getResources().getString(R.string.start_location));
             locationButton.setText(R.string.start_location);
             locButt_text = getResources().getString(R.string.start_location);
