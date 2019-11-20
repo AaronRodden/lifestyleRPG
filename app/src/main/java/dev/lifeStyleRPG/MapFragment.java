@@ -7,9 +7,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
@@ -20,6 +23,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,8 +34,22 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
     private View mapView;
@@ -39,6 +57,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
     private static mapsViewModel viewModel;
+    private FirebaseFirestore fstore;
+    private FirebaseAuth mFireBaseAuth;
 
     Button locationButton;
     String locButt_text;
@@ -98,6 +118,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         Log.e("MapsFragment", "onCreate");
         mapView = inflater.inflate(R.layout.fragment_map, null);
+
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        fstore = FirebaseFirestore.getInstance();
 
         //initialize the locationButton
         locationButton = mapView.findViewById(R.id.MapsLocationButton);
@@ -200,6 +223,51 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
+            //To track the city name
+            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+            Map<String, Object> payload = new HashMap<>();
+            try {
+                List<Address> addresses = geocoder.getFromLocation(viewModel.getPlayerPos().latitude,viewModel.getPlayerPos().longitude,1);
+                String cityName = addresses.get(0).getAddressLine(0);
+                payload.put("location",cityName);
+            //Throws IOexception if geocoder isn't available
+            } catch (IOException e) {
+                Toast.makeText(getContext(),"network unavailable",Toast.LENGTH_SHORT).show();
+                //empty string null...
+                payload.put("location","");
+            }
+            payload.put("userid",mFireBaseAuth.getCurrentUser().getUid());
+            payload.put("name", viewModel.getTrailName());
+            payload.put("time",new Timestamp(new Date()));
+            //firebase only accepts geopoints, so we have to convert the trail's latlng to geopoint
+            ArrayList<GeoPoint> gpTrail= new ArrayList<>();
+            ArrayList<LatLng> trail = viewModel.getTrail();
+            if(trail != null){
+                Iterator<LatLng> it = trail.iterator();
+                while(it.hasNext()){
+                    LatLng t = it.next();
+                    gpTrail.add(new GeoPoint(t.latitude,t.longitude));
+                }
+                payload.put("trailPoints",gpTrail);
+            }else{
+                payload.put("trailPoints","");
+            }
+
+
+            fstore.collection("trails").
+                    add(payload)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Toast.makeText(getContext(),"Trail successfully saved", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(getContext(),"Not saved to cloud", Toast.LENGTH_SHORT).show();
+                        }
+                    });
             endTrail();
             getActivity().stopService(locationIntent);
             viewModel.setString(getResources().getString(R.string.start_location));

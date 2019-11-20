@@ -87,11 +87,7 @@ public class RegisterScreen extends AppCompatActivity {
                 }
                 else{
                     Toast.makeText(RegisterScreen.this,"Error Occurred!",Toast.LENGTH_SHORT).show();
-
                 }
-
-
-
             }
         });
 
