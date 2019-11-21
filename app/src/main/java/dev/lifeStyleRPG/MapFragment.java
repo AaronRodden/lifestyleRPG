@@ -38,14 +38,18 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
     private View mapView;
@@ -82,6 +87,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             .visible(false)
             .width(3);
 
+    //Viewmodel holds the info, this holds the actual polyline. Draw polylines gets information from
+    //the maps viewmodel and inserts a polyline corresponding to its id here
+    private HashMap<String,Polyline> map_trails = new HashMap<>();
+    private static PolylineOptions map_trails_options = new PolylineOptions()
+            .visible(true)
+            .width(3)
+            .color(Color.GREEN);
+
     /**
      * Next few Overrides deal with saving the state of the fragment.
      * Currently rotating will save the fragment state correctly
@@ -91,35 +104,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState){
-        super.onActivityCreated(savedInstanceState);
-        Log.e("MapsFragment", "onActivityCreated");
-       //restore fragment state here
-        if(savedInstanceState != null){
-            viewModel.setString(savedInstanceState.getString("button_txt"));
-            //If we come back from a pause or something, and they didn't stop the trail
-            //we must populate the view model again.
-            Log.e("Fragment", savedInstanceState.getParcelableArrayList("trail").toString());
-            if (savedInstanceState.getBoolean("isMaking") == true){
-                trail_name=savedInstanceState.getString("trail_name");
-                continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
-            }
-            viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
-        }
-    }
-    @Override
-    public void onSaveInstanceState(Bundle outState){
-        super.onSaveInstanceState(outState);
-        outState.putString("button_txt", viewModel.get_current_text());
-        ArrayList<LatLng> tmp = viewModel.getTrail();
-        outState.putParcelableArrayList("trail", tmp);
-        outState.putString("trail_name", viewModel.getTrailName());
-        outState.putBoolean("isMaking", viewModel.isMakingTrail());
-        outState.putParcelable("last_pos", viewModel.getLastPos());
-    }
-
     //Note, with this logic, this is only called once. These should be initializers
     //Only called again when the fragment is destroyed.
     @Override
@@ -141,6 +125,66 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         //So actions with "sample-event" are found
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
         return mapView;
+    }
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState){
+        super.onActivityCreated(savedInstanceState);
+        Log.e("MapsFragment", "onActivityCreated");
+
+        //Let's pull information from firestore here
+        //Attaches a Listener that performs an action once complete
+        //Maybe here we store the trails in the view model
+        fstore.collection("trails").get()
+            .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    if(task.isSuccessful()){
+                        for(QueryDocumentSnapshot document: task.getResult()){
+                            //Log.e("MapsFragment", document.getId() + "=>" + document.getData());
+                            viewModel.insertTrail(document.getId(), document.getData());
+                        }
+                        //Also draw the trails
+                        drawTrails(viewModel.returnTrailMap().keySet());
+                    }else{
+                        Log.d("MapsFragment","Error getting documents");
+                    }
+                }
+            });
+
+        //restore fragment state here
+        if(savedInstanceState != null){
+            viewModel.setString(savedInstanceState.getString("button_txt"));
+            //If we come back from a pause or something, and they didn't stop the trail
+            //we must populate the view model again.
+            Log.e("Fragment", savedInstanceState.getParcelableArrayList("trail").toString());
+            if (savedInstanceState.getBoolean("isMaking") == true){
+                trail_name=savedInstanceState.getString("trail_name");
+                continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
+            }
+            viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
+        }
+    }
+
+    private void drawTrails(Set<String> keySet) {
+        for(String key: keySet){
+            Polyline trail;
+            trail = mMap.addPolyline(map_trails_options);
+            trail.setPoints((List<LatLng>)viewModel.returnTrailMap().get(key).get("trailPoints"));
+            trail.setVisible(true);
+            map_trails.put(key,trail);
+        }
+    }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState){
+        super.onSaveInstanceState(outState);
+        outState.putString("button_txt", viewModel.get_current_text());
+        ArrayList<LatLng> tmp = viewModel.getTrail();
+        outState.putParcelableArrayList("trail", tmp);
+        outState.putString("trail_name", viewModel.getTrailName());
+        outState.putBoolean("isMaking", viewModel.isMakingTrail());
+        outState.putParcelable("last_pos", viewModel.getLastPos());
     }
 
     @Override
@@ -193,6 +237,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onMapReady(GoogleMap googleMap) {
         Log.e("MapsFragment", "onMapReady");
         mMap = googleMap;
+        LatLng asdf = new LatLng(-34.058,22.43);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(asdf,15));
         locationButton.setText(viewModel.get_current_text());
         /*Get last known coordinates, and i*/
         if(viewModel.getLastPos() != null && player_pos == null)
@@ -234,11 +280,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             if(txtUrl.getText().toString().equals("") || txtUrl.getText() == null){
-                                Toast.makeText(getContext(),"Please enter a name", Toast.LENGTH_SHORT);
+                                Toast.makeText(getContext(),"Please enter a name", Toast.LENGTH_SHORT).show();
                                 return;
                             }
                             trail_name = txtUrl.getText().toString();
-                            Log.e("Fragment", "Hello why the fcuk");
 
                             /**
                             * Starts the location service
@@ -260,8 +305,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
-            //To track the city name
-            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
             Map<String, Object> payload = new HashMap<>();
             getActivity().stopService(locationIntent);
 
@@ -272,7 +315,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 locButt_text = getResources().getString(R.string.start_location);
                 return;
             }
-
+            //To track the city name
+            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
             try {
                 List<Address> addresses = geocoder.getFromLocation(viewModel.getPlayerPos().latitude,viewModel.getPlayerPos().longitude,1);
                 String cityName = addresses.get(0).getAddressLine(0);
@@ -336,7 +380,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         viewModel.setTrail(prefix);
         viewModel.setMakingTrail(true);
         currentTrailOptions.visible(true);
-
     }
 
     // discards the current trail
@@ -348,7 +391,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
     public static void endTrail() {
         viewModel.setMakingTrail(false);
-        viewModel.stashTrail();
+        //viewModel.stashTrail();
         currentTrailOptions.visible(false);
     }
 

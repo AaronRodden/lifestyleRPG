@@ -4,17 +4,26 @@ import android.util.Log;
 import androidx.lifecycle.ViewModel;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.GeoPoint;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class mapsViewModel extends ViewModel {
     private String current_text = "Track Location" ;
     private LatLng current_loc;
     private String newTrailName = "";
     private boolean makingTrail = false;
+    //This is an arraylist for current user creating their trail.
     private ArrayList<LatLng> newTrail = new ArrayList<>();
-    private HashMap<String, ArrayList<LatLng>> trails = new HashMap<>();
+    //This is a map of all the trails located on the map
+    //Index by trailID instead of trail name
+   //private HashMap<String, ArrayList<LatLng>> trails = new HashMap<>();
+    private HashMap<String, Map> trails = new HashMap<>();
+
 
     public String get_current_text(){
         return current_text;
@@ -65,9 +74,23 @@ public class mapsViewModel extends ViewModel {
         return newTrail;
     }
 
-    public synchronized void stashTrail() {
-        trails.put(newTrailName, newTrail);
+    public HashMap<String, Map> returnTrailMap() {return trails;}
+
+    public synchronized void insertTrail(String trailId, Map data) {
+        Iterator<GeoPoint> it = ((ArrayList)data.get("trailPoints")).iterator();
+        ArrayList<LatLng> temp = new ArrayList<>();
+
+        while(it.hasNext()){
+            GeoPoint t = it.next();
+            temp.add(new LatLng(t.getLatitude(),t.getLongitude()));
+        }
+        data.put("trailPoints", temp);
+        trails.put(trailId, data);
+        Log.e("viewModel", trails.get(trailId).toString());
     }
+    /*public synchronized void stashTrail() {
+        trails.put(newTrailName, newTrail);
+    }*/
 
     public synchronized void appendToTrail(LatLng toAppend) {
         newTrail.add(toAppend);
