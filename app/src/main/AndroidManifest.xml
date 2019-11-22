@@ -48,6 +48,10 @@
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/title_activity_maps" />
 
+        <activity
+            android:name=".PlayerMenu"
+            android:label="@string/player_menu_activity" />
+
         <service
             android:name=".LocationService"
             android:enabled="true"
