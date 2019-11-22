@@ -96,15 +96,11 @@ public class MapsActivity extends AppCompatActivity{
     }
 
     //User pauses the activity, like goes on to a different activity.
-    //As long as they don't press the button, we still need to save and track location
-    //When they come back all the stuff should still be here
     @Override
     protected void onPause(){
         super.onPause();
         Log.e("MapsActivity", "OnPause");
     }
-    //This method is called when the activity is going to be destroyed, not paused
-    //This should save state of the activity, send data to firebase etc.
     @Override
     protected void onDestroy(){
         super.onDestroy();

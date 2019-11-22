@@ -11,6 +11,19 @@ import android.view.MenuItem;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+/**
+ * The idea of this activity is for the user to locate other trails on the map.
+ *
+ * We can search either by nearest location.
+ *
+ * Display out clickable rows that has the trails. User clicks on the trails, the maps activity/fragment
+ * is brought to the foreground with the camera zoomed to the trail. Or something like that.
+ *
+ * This activity will be started for a result, and the result will be something that the Maps Activity
+ * can use to locate the trail, maybe a trailid or something.
+ *
+ * Open to other idea.
+ */
 public class Trails extends AppCompatActivity {
 
     @Override

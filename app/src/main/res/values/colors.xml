@@ -5,4 +5,6 @@
     <color name="colorAccent">#D81B60</color>
     <color name="colorPurple">#4A47A7</color>
     <color name="blueish">#BF437D9C</color>
+    <color name="player_trail">#BA2C9400</color>
+    <color name="trail">#B7006094</color>
 </resources>

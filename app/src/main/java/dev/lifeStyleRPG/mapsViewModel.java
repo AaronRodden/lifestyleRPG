@@ -6,13 +6,18 @@ import androidx.lifecycle.ViewModel;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * View model to save fragment UI state. Contains metadata on button text, trails on the map,
+ * and player trail's.
+ *
+ */
 public class mapsViewModel extends ViewModel {
+    //For startlocation button
     private String current_text = "Track Location" ;
     private LatLng current_loc;
     private String newTrailName = "";
@@ -21,7 +26,6 @@ public class mapsViewModel extends ViewModel {
     private ArrayList<LatLng> newTrail = new ArrayList<>();
     //This is a map of all the trails located on the map
     //Index by trailID instead of trail name
-   //private HashMap<String, ArrayList<LatLng>> trails = new HashMap<>();
     private HashMap<String, Map> trails = new HashMap<>();
 
 
@@ -76,6 +80,12 @@ public class mapsViewModel extends ViewModel {
 
     public HashMap<String, Map> returnTrailMap() {return trails;}
 
+    /**
+     * This function is called to store firebase document containing trail information into the
+     * hashmap trails. data contains trailPoints, name (trail name), userid, time, location.
+     * @param trailId
+     * @param data
+     */
     public synchronized void insertTrail(String trailId, Map data) {
         Iterator<GeoPoint> it = ((ArrayList)data.get("trailPoints")).iterator();
         ArrayList<LatLng> temp = new ArrayList<>();
@@ -97,10 +107,13 @@ public class mapsViewModel extends ViewModel {
         // verbose logs?
         Log.v("maps-viewmodel", "Added new point to trail");
     }
-    public void setTrail(ArrayList<LatLng> prefix){
+
+    //Keep creating trail from a pause
+    public void continueTrail(ArrayList<LatLng> prefix){
         newTrail = new ArrayList<>(prefix);
     }
 
+    //get last position of current trail
     public LatLng getLastPos() {
         return newTrail.size() == 0 ? null : newTrail.get(newTrail.size() - 1);
     }

@@ -33,10 +33,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.ButtCap;
-import com.google.android.gms.maps.model.Cap;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -44,12 +40,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
@@ -58,18 +52,17 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.io.CharConversionException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
+
     private View mapView;
     private static GoogleMap mMap;
     //for permissions, basically an arbitrary number to mark/identify requests
@@ -83,6 +76,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     MarkerOptions marker_options = new MarkerOptions().anchor((float)0.5,(float)0.5);
     Button locationButton;
     String locButt_text;
+    //current trail
     String trail_name;
     Intent locationIntent;
 
@@ -93,28 +87,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             .strokeWidth(3f)
             .strokeColor(Color.RED)
             .fillColor(Color.BLUE);
+
+    //Trail player is currently making
     private static Polyline currentTrail;
     private static PolylineOptions currentTrailOptions = new PolylineOptions()
             .visible(false)
-            .width(3);
+            .color(R.color.player_trail)
+            .width(10);
 
     //Viewmodel holds the info, this holds the actual polyline. Draw polylines gets information from
     //the maps viewmodel and inserts a polyline corresponding to its id here
     private HashMap<String,Polyline> map_trails = new HashMap<>();
     private static PolylineOptions map_trails_options = new PolylineOptions()
             .visible(true)
-            .width(3)
-            .color(Color.GREEN);
+            .width(10)
+            .color(R.color.trail);
 
     /**
      * Next few Overrides deal with saving the state of the fragment.
-     * Currently rotating will save the fragment state correctly
-     * Leaving the activity and saving the fragment state is a TODO
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
+
     //Note, with this logic, this is only called once. These should be initializers
     //Only called again when the fragment is destroyed.
     @Override
@@ -130,21 +126,32 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         locationButton.setOnClickListener(this);
         //set up the viewModel class, bind it to this activity
         viewModel = ViewModelProviders.of(this).get(mapsViewModel.class);
-        //set text of location button from viewmodel
 
         //Register this activity to receive messages
         //So actions with "sample-event" are found
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(myBroadcastReceiver, new IntentFilter("sample-event"));
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(myBroadcastReceiver, new IntentFilter("locationService"));
         return mapView;
     }
+
+    /**
+     * Called after Activity's oncreate method has completed, and after on createview.
+     * This is used to re-initialize and restore the viewmodel when leaving the Maps activity.
+     *
+     * I also pull firebase data here.
+     *
+     * cons: i'm not saving the information - everytime I leave and stuff it pulls all the data from
+     * fire base. There's a way to do something like, onupdateslistener to only pull recent documents
+     * but I'm not sure how to do that. It's an optimization.
+     *
+     * Another opt, I'm not saving the hashmap of trails in viewmodel, I'm always repopulating it
+     * since this is called after leaving an activity. We could save hashmap state but I'm lazy.
+     */
     @Override
     public void onActivityCreated(Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
         Log.e("MapsFragment", "onActivityCreated");
-
         //Let's pull information from firestore here
         //Attaches a Listener that performs an action once complete
-        //Maybe here we store the trails in the view model
         fstore.collection("trails").get()
             .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                 @Override
@@ -165,22 +172,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         //restore fragment state here
         if(savedInstanceState != null){
             viewModel.setString(savedInstanceState.getString("button_txt"));
-            //If we come back from a pause or something, and they didn't stop the trail
-            //we must populate the view model again.
             Log.e("Fragment", savedInstanceState.getParcelableArrayList("trail").toString());
+            //If we were currently making a trail, continue to append to the trail.
             if (savedInstanceState.getBoolean("isMaking") == true){
                 trail_name=savedInstanceState.getString("trail_name");
                 continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
             }
             viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
+            //marker state when user clicks a polyline.
             if(savedInstanceState.get("marker") != null){
                 marker_options.position(savedInstanceState.getParcelable("marker"));
                 mMap.addMarker(marker_options);
             }
-
         }
     }
 
+    //Given trailid's from the viewmodel or Firebase, draw out the trails.
     private void drawTrails(Set<String> keySet) {
         for(String key: keySet){
             Polyline trail;
@@ -188,7 +195,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             trail.setZIndex(-1);
             trail.setPoints((List<LatLng>)viewModel.returnTrailMap().get(key).get("trailPoints"));
             trail.setTag(viewModel.returnTrailMap().get(key).get("name"));
+
             //I need to get caps working so this is a placeholder
+            //TODO: Replace this with caps, I have tried but they don't appear.
             CircleOptions startOptions = new CircleOptions()
                     .center(trail.getPoints().get(0))
                     .fillColor(Color.CYAN)
@@ -210,7 +219,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         }
     }
 
-
+    /*
+    This is called onPause and onDestroy. Save variables and info needed here.
+     */
     @Override
     public void onSaveInstanceState(Bundle outState){
         super.onSaveInstanceState(outState);
@@ -240,6 +251,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         if(player_pos != null)
             player_pos.remove();
     }
+    /*
+    TODO Probably do clean up here, which I haven't done yet.
+     */
     @Override
     public void onDestroy(){
         super.onDestroy();
@@ -263,8 +277,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
      * If Google Play services is not installed on the device, the user will be prompted to install
      * it inside the SupportMapFragment. This method will only be triggered once the user has
      * installed Google Play services and returned to the app.
@@ -284,10 +296,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 marker.showInfoWindow();
             }
         });
+
         //for debugging purposes because i'm in africa lmao
-        LatLng asdf = new LatLng(-34.058,22.43);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(asdf,15));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
         locationButton.setText(viewModel.get_current_text());
+
         /*Get last known coordinates, and i*/
         if(viewModel.getLastPos() != null && player_pos == null)
             player_pos = mMap.addCircle(circle_properties.center(viewModel.getLastPos()));
@@ -299,24 +312,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     /**
      *Method for starting Location Service
      * Maybe for the text, we'll check if the service is active instead of relying on string.
-     * Since if the activity is cut short before the view model is set, then there might be problems
-     *https://stackoverflow.com/questions/600207/how-to-check-if-a-service-is-running-on-android
-     * i'll implement that later
      */
     public void startLocationService(View view) {
-        //this is the location button on maps
+        //this is the location button on maps that starts the service
         locationButton = (Button) view;
         locButt_text = locationButton.getText().toString();
         locationIntent = new Intent(getActivity(), LocationService.class);
         if (locButt_text.equals(getResources().getString(R.string.start_location))){
             //ask for permissions.
-            //need to still handle a deny request
+            //TODO need to still handle a deny request
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
                 Log.d("startLocationService","not granted");
                 //if permissions aren't set, ask
                 ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
             } else {
-
                 /**
                  * Sets up insert trail name dialogue
                  */
@@ -353,7 +362,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
-            Map<String, Object> payload = new HashMap<>();
             getActivity().stopService(locationIntent);
 
             //Deals with the case if user starts and stops quickly
@@ -363,55 +371,61 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 locButt_text = getResources().getString(R.string.start_location);
                 return;
             }
-            //To track the city name
-            Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
-            try {
-                List<Address> addresses = geocoder.getFromLocation(viewModel.getPlayerPos().latitude,viewModel.getPlayerPos().longitude,1);
-                String cityName = addresses.get(0).getAddressLine(0);
-                payload.put("location",cityName);
-            //Throws IOexception if geocoder isn't available
-            } catch (IOException e) {
-                Toast.makeText(getContext(),"network unavailable",Toast.LENGTH_SHORT).show();
-                //empty string null...
-                payload.put("location","");
-            }
-            payload.put("userid",mFireBaseAuth.getCurrentUser().getUid());
-            payload.put("name", viewModel.getTrailName());
-            payload.put("time",new Timestamp(new Date()));
-            //firebase only accepts geopoints, so we have to convert the trail's latlng to geopoint
-            ArrayList<GeoPoint> gpTrail= new ArrayList<>();
-            ArrayList<LatLng> trail = viewModel.getTrail();
-            if(trail != null){
-                Iterator<LatLng> it = trail.iterator();
-                while(it.hasNext()){
-                    LatLng t = it.next();
-                    gpTrail.add(new GeoPoint(t.latitude,t.longitude));
-                }
-                payload.put("trailPoints",gpTrail);
-            }else{
-                payload.put("trailPoints","");
-            }
-
-            //Adds in the payload
-            fstore.collection("trails").
-                    add(payload)
-                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                        @Override
-                        public void onSuccess(DocumentReference documentReference) {
-                            Toast.makeText(getContext(),"Trail successfully saved", Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(getContext(),"Not saved to cloud", Toast.LENGTH_SHORT).show();
-                        }
-                    });
+            storeIntoFirebase();
             endTrail();
             viewModel.setString(getResources().getString(R.string.start_location));
             locationButton.setText(R.string.start_location);
             locButt_text = getResources().getString(R.string.start_location);
         }
+    }
+
+    /**
+     * User has finished creating a trail, store the new trail info into firebase.
+     */
+    private void storeIntoFirebase() {
+        Map<String, Object> payload = new HashMap<>();
+        //To track the city name
+        Geocoder geocoder = new Geocoder(getActivity(), Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(viewModel.getPlayerPos().latitude,viewModel.getPlayerPos().longitude,1);
+            String cityName = addresses.get(0).getAddressLine(0);
+            payload.put("location",cityName);
+            //Throws IOexception if geocoder isn't available
+        } catch (IOException e) {
+            Toast.makeText(getContext(),"network unavailable",Toast.LENGTH_SHORT).show();
+            //empty string null...
+            payload.put("location","");
+        }
+        payload.put("userid",mFireBaseAuth.getCurrentUser().getUid());
+        payload.put("name", viewModel.getTrailName());
+        payload.put("time",new Timestamp(new Date()));
+        //firebase only accepts geopoints, so we have to convert the trail's latlng to geopoint
+        ArrayList<GeoPoint> gpTrail= new ArrayList<>();
+        ArrayList<LatLng> trail = viewModel.getTrail();
+        if(trail != null){
+            for (LatLng t : trail) {
+                gpTrail.add(new GeoPoint(t.latitude, t.longitude));
+            }
+            payload.put("trailPoints",gpTrail);
+        }else{
+            payload.put("trailPoints","");
+        }
+        //Adds in the payload
+        fstore.collection("trails").
+                add(payload)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Toast.makeText(getContext(),"Trail successfully saved", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                //TODO  Maybe a try again thing later on
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getContext(),"Not saved to cloud", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     //Start trail
@@ -421,11 +435,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         viewModel.setMakingTrail(true);
         currentTrailOptions.visible(true);
     }
-    //start trail from a pause
+    //Keep creating trail from a pause
     public static void continueTrail(String name, ArrayList<LatLng> prefix){
         viewModel.resetTrail();
         viewModel.setTrailName(name);
-        viewModel.setTrail(prefix);
+        viewModel.continueTrail(prefix);
         viewModel.setMakingTrail(true);
         currentTrailOptions.visible(true);
     }
@@ -444,8 +458,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     }
 
     /*
-    BroadCast receiver to interact with a local broadcast manasger from Location Service.
-    Below methods will interact with the maps activity.
+    BroadCast receiver to interact with a local broadcast manager from Location Service.
+    Below methods will interact with the maps fragment.
      */
     private static BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
 
@@ -489,6 +503,4 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
         return locA.distanceTo(locB);
     }
-
-
 }
