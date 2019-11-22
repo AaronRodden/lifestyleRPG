@@ -33,11 +33,18 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.ButtCap;
+import com.google.android.gms.maps.model.Cap;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -51,6 +58,7 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.io.CharConversionException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -70,6 +78,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private FirebaseFirestore fstore;
     private FirebaseAuth mFireBaseAuth;
 
+
+    Marker marker;
+    MarkerOptions marker_options = new MarkerOptions().anchor((float)0.5,(float)0.5);
     Button locationButton;
     String locButt_text;
     String trail_name;
@@ -162,6 +173,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
             }
             viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
+            if(savedInstanceState.get("marker") != null){
+                marker_options.position(savedInstanceState.getParcelable("marker"));
+                mMap.addMarker(marker_options);
+            }
+
         }
     }
 
@@ -169,7 +185,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         for(String key: keySet){
             Polyline trail;
             trail = mMap.addPolyline(map_trails_options);
+            trail.setZIndex(-1);
             trail.setPoints((List<LatLng>)viewModel.returnTrailMap().get(key).get("trailPoints"));
+            trail.setTag(viewModel.returnTrailMap().get(key).get("name"));
+            //I need to get caps working so this is a placeholder
+            CircleOptions startOptions = new CircleOptions()
+                    .center(trail.getPoints().get(0))
+                    .fillColor(Color.CYAN)
+                    .strokeColor(Color.CYAN)
+                    .zIndex(1)
+                    .radius(5);
+            CircleOptions endOptions = new CircleOptions()
+                    .center(trail.getPoints().get(trail.getPoints().size()-1))
+                    .fillColor(Color.MAGENTA)
+                    .strokeColor(Color.MAGENTA)
+                    .zIndex(1)
+                    .radius(5);
+            Circle start = mMap.addCircle(startOptions);
+            Circle end = mMap.addCircle(endOptions);
+
+            trail.setClickable(true);
             trail.setVisible(true);
             map_trails.put(key,trail);
         }
@@ -185,6 +220,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         outState.putString("trail_name", viewModel.getTrailName());
         outState.putBoolean("isMaking", viewModel.isMakingTrail());
         outState.putParcelable("last_pos", viewModel.getLastPos());
+        if(marker != null) outState.putParcelable("marker", marker.getPosition());
     }
 
     @Override
@@ -237,6 +273,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onMapReady(GoogleMap googleMap) {
         Log.e("MapsFragment", "onMapReady");
         mMap = googleMap;
+        mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
+            @Override
+            public void onPolylineClick(Polyline polyline) {
+                LatLng midpoint = polyline.getPoints().get(polyline.getPoints().size()/2);
+
+                if(marker != null) marker.remove();
+                marker = mMap.addMarker(marker_options.position(midpoint)
+                        .title(polyline.getTag().toString()));
+                marker.showInfoWindow();
+            }
+        });
+        //for debugging purposes because i'm in africa lmao
         LatLng asdf = new LatLng(-34.058,22.43);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(asdf,15));
         locationButton.setText(viewModel.get_current_text());
