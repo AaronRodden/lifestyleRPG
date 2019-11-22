@@ -9,16 +9,16 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import android.os.PersistableBundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -27,11 +27,9 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-
-import java.util.Locale;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
@@ -42,12 +40,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static int count = 0;
     //for permissions, basically an arbitrary number to mark/identify requests
     final static int REQUEST_CODE = 100;
+    public static final int REQUESTCODE = 1;
     public static mapsViewModel viewModel;
 
     Button locationButton;
     String locButt_text;
     Intent locationIntent;
-
+    BottomNavigationView bottomNavigationView;
     //for tracking user.
     public static Circle player_pos;
     public static CircleOptions circle_properties = new CircleOptions()
@@ -72,6 +71,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //initialize the locationButton
         locationButton = findViewById(R.id.MapsLocationButton);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.maps_screen:
+                        break;
+                    case R.id.player_profile_screen:
+                        Intent profileIntent = new Intent(MapsActivity.this, PlayerMenu.class);
+                        startActivity(profileIntent);
+                        break;
+                    case R.id.trails_screen:
+//                        Intent trailsIntent = new Intent(getApplicationContext(),Trails.class);
+//                        startActivityForResult(trailsIntent, REQUESTCODE);
+                        break;
+                    case R.id.settings_screen:
+                        break;
+                }
+                return true;
+            }
+        });
         //set up the viewModel class, bind it to this activity
         viewModel = ViewModelProviders.of(this).get(mapsViewModel.class);
         //set text of location button from viewmodel
