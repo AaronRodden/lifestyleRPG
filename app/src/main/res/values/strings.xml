@@ -17,4 +17,7 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="explvl">"Total EXP:"</string>
+    <string name="trailsdone">"Trails completed:"</string>
+    <string name="player_menu_activity">Player Menu</string>
 </resources>
