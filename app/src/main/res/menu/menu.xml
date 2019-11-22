@@ -8,7 +8,7 @@
         android:icon="@drawable/illustration"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_screen"
+        android:id="@+id/trails_screen"
         android:enabled="true"
         android:title="Menu"
         android:icon="@drawable/illustration"
