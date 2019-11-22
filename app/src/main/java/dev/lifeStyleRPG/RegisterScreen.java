@@ -72,7 +72,7 @@ public class RegisterScreen extends AppCompatActivity {
 
                                 Map<String, Object> user = new HashMap<>();
                                 user.put("login", email);
-                                user.put("password", pwd);
+//                                user.put("password", pwd);
                                 user.put("spriteID", 0);
                                 user.put("level", 1);
                                 user.put("experience", 0);
