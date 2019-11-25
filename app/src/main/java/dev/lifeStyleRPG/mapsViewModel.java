@@ -1,6 +1,4 @@
-package dev.lifeStyleRPG;
-import android.util.Log;
-
+package dev.lifeStyleRPG; import android.util.Log; 
 import androidx.lifecycle.ViewModel;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -18,40 +16,39 @@ import java.util.Map;
  */
 public class mapsViewModel extends ViewModel {
     //For startlocation button
-    private String current_text = "Track Location" ;
-    private LatLng current_loc;
-    private String newTrailName = "";
+    private String currentText = "Track Location" ;
+    private LatLng currentLocation;
+    private String currentTrailName = "";
     private boolean makingTrail = false;
-    //This is an arraylist for current user creating their trail.
-    private ArrayList<LatLng> newTrail = new ArrayList<>();
-    //This is a map of all the trails located on the map
-    //Index by trailID instead of trail name
+    private boolean runningTrail = false;
+    // This is an arraylist for the trail being run or created
+    private ArrayList<LatLng> currentTrail = new ArrayList<>();
+    // This is a map of all the trails located on the map
+    // Index by trailID instead of trail name
     private HashMap<String, Map> trails = new HashMap<>();
 
 
-    public String get_current_text(){
-        return current_text;
+    public String getCurrentText(){
+        return currentText;
     }
 
-    public void setString(String s){
-        current_text = s;
-    }
+    public void setString(String s) { currentText = s; }
 
-    public void setPlayerPos(LatLng pos) {current_loc = pos;}
-    public LatLng getPlayerPos() {return current_loc;}
+    public void setPlayerPos(LatLng pos) { currentLocation = pos; }
+    public LatLng getPlayerPos() { return currentLocation; }
 
     // I don't know if these actually need to be synchronized; it sounds like the location
     // service runs in a separated thread? But it all goes through our main maps activity
     // so idk
     public synchronized void resetTrail() {
-        newTrail = new ArrayList<>();
+        currentTrail = new ArrayList<>();
         // info logs?
         Log.i("maps-viewmodel", "Trail reset");
     }
 
     public synchronized void deleteTrail(String name) {
-        if(newTrailName.equals(name)) {
-            newTrail.clear();
+        if(currentTrailName.equals(name)) {
+            currentTrail.clear();
             makingTrail = false;
         }
         trails.remove(name);
@@ -66,19 +63,46 @@ public class mapsViewModel extends ViewModel {
         return makingTrail;
     }
 
-    public synchronized void setTrailName(String name) {
-        newTrailName = name;
+    public synchronized void setRunningTrail(boolean bool) {
+        runningTrail = bool;
     }
 
-    public String getTrailName() {
-        return newTrailName;
+    public boolean isRunningTrail() {
+        return runningTrail;
     }
 
-    public ArrayList<LatLng> getTrail() {
-        return newTrail;
+    public synchronized void setCurrentTrailName(String name) {
+        currentTrailName = name;
     }
 
-    public HashMap<String, Map> returnTrailMap() {return trails;}
+    public String getCurrentTrailName() {
+        return currentTrailName;
+    }
+
+    public synchronized void setCurrentTrail(ArrayList<LatLng> trail) {
+        currentTrail = trail;
+    }
+
+    public ArrayList<LatLng> getCurrentTrail() {
+        return currentTrail;
+    }
+
+    public ArrayList<LatLng> getTrailById(String id) {
+        return (ArrayList) trails.get(id).get("trailPoints");
+    }
+
+    // TODO: get rid of this and add a way for the user to select a trail without knowing
+    // the ID of the user that created it
+    public ArrayList<LatLng> getTrailByName(String name) {
+        for(String key : trails.keySet()) {
+            if(key.startsWith(name)) {
+                return (ArrayList) trails.get(key).get("trailPoints");
+            }
+        }
+        return null;
+    }
+
+    public HashMap<String, Map> getTrailMap() { return trails; }
 
     /**
      * This function is called to store firebase document containing trail information into the
@@ -99,22 +123,22 @@ public class mapsViewModel extends ViewModel {
         Log.e("viewModel", trails.get(trailId).toString());
     }
     /*public synchronized void stashTrail() {
-        trails.put(newTrailName, newTrail);
+        trails.put(currentTrailName, currentTrail);
     }*/
 
     public synchronized void appendToTrail(LatLng toAppend) {
-        newTrail.add(toAppend);
+        currentTrail.add(toAppend);
         // verbose logs?
         Log.v("maps-viewmodel", "Added new point to trail");
     }
 
     //Keep creating trail from a pause
     public void continueTrail(ArrayList<LatLng> prefix){
-        newTrail = new ArrayList<>(prefix);
+        currentTrail = new ArrayList<>(prefix);
     }
 
     //get last position of current trail
     public LatLng getLastPos() {
-        return newTrail.size() == 0 ? null : newTrail.get(newTrail.size() - 1);
+        return currentTrail.size() == 0 ? null : currentTrail.get(currentTrail.size() - 1);
     }
 }
