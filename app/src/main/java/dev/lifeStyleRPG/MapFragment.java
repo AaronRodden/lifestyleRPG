@@ -98,7 +98,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
     //Viewmodel holds the info, this holds the actual polyline. Draw polylines gets information from
     //the maps viewmodel and inserts a polyline corresponding to its id here
-    private HashMap<String,Polyline> map_trails = new HashMap<>();
+    private static HashMap<String,Polyline> map_trails = new HashMap<>();
     private static PolylineOptions map_trails_options = new PolylineOptions()
             .visible(true)
             .width(10)
@@ -163,7 +163,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                             viewModel.insertTrail(document.getId(), document.getData());
                         }
                         //Also draw the trails
-                        drawTrails(viewModel.returnTrailMap().keySet());
+                        drawTrails(viewModel.getTrailMap().keySet());
                     }else{
                         Log.d("MapsFragment","Error getting documents");
                     }
@@ -174,11 +174,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         if(savedInstanceState != null){
             viewModel.setString(savedInstanceState.getString("button_txt"));
             Log.e("Fragment", savedInstanceState.getParcelableArrayList("trail").toString());
-            //If we were currently making a trail, continue to append to the trail.
-            if (savedInstanceState.getBoolean("isMaking") == true){
-                trail_name=savedInstanceState.getString("trail_name");
-                continueTrail(savedInstanceState.getString("trail_name"), savedInstanceState.getParcelableArrayList("trail"));
-            }
+            // restore trail state
+            trail_name=savedInstanceState.getString("trail_name");
+            continueTrail(savedInstanceState.getString("trail_name"),
+                    savedInstanceState.getParcelableArrayList("trail"),
+                    savedInstanceState.getBoolean("isMaking"),
+                    savedInstanceState.getBoolean("isRunning"));
             viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
             //marker state when user clicks a polyline.
             if(savedInstanceState.getParcelable("marker") != null){
@@ -197,8 +198,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             Polyline trail;
             trail = mMap.addPolyline(map_trails_options);
             trail.setZIndex(-1);
-            trail.setPoints((List<LatLng>)viewModel.returnTrailMap().get(key).get("trailPoints"));
-            trail.setTag(viewModel.returnTrailMap().get(key));
+            trail.setPoints((List<LatLng>)viewModel.getTrailMap().get(key).get("trailPoints"));
+            trail.setTag(viewModel.getTrailMap().get(key).get("name"));
 
             //I need to get caps working so this is a placeholder
             //TODO: Replace this with caps, I have tried but they don't appear.
@@ -229,11 +230,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     @Override
     public void onSaveInstanceState(Bundle outState){
         super.onSaveInstanceState(outState);
-        outState.putString("button_txt", viewModel.get_current_text());
-        ArrayList<LatLng> tmp = viewModel.getTrail();
+        outState.putString("button_txt", viewModel.getCurrentText());
+        ArrayList<LatLng> tmp = viewModel.getCurrentTrail();
         outState.putParcelableArrayList("trail", tmp);
-        outState.putString("trail_name", viewModel.getTrailName());
+        outState.putString("trail_name", viewModel.getCurrentTrailName());
         outState.putBoolean("isMaking", viewModel.isMakingTrail());
+        outState.putBoolean("isRunning", viewModel.isRunningTrail());
         outState.putParcelable("last_pos", viewModel.getLastPos());
         if(marker != null) outState.putParcelable("marker", marker.getPosition());
     }
@@ -242,8 +244,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onResume() {
         super.onResume();
         Log.e("MapsFragment", "onResume");
-        locationButton.setText(viewModel.get_current_text());
-        trail_name = viewModel.getTrailName();
+        locationButton.setText(viewModel.getCurrentText());
+        trail_name = viewModel.getCurrentTrailName();
         SupportMapFragment smf = ((SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map));
         smf.getMapAsync(this);
     }
@@ -307,19 +309,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                         .title(name)
                         .snippet(uid));
                 marker.showInfoWindow();
+                runTrail(polyline.getTag().toString());
+                // make the button say "Stop",  and pressing it should let up abandon the trail
+                locButt_text = getResources().getString(R.string.stop_location);
+                locationButton.setText(R.string.stop_location);
+                viewModel.setString(getResources().getString(R.string.stop_location));
             }
         });
 
         //for debugging purposes because i'm in africa lmao
-        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
-        locationButton.setText(viewModel.get_current_text());
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
+        locationButton.setText(viewModel.getCurrentText());
 
         /*Get last known coordinates, and i*/
         if(viewModel.getLastPos() != null && player_pos == null)
             player_pos = mMap.addCircle(circle_properties.center(viewModel.getLastPos()));
-        if(viewModel.getTrail() != null)
+        if(viewModel.getCurrentTrail() != null)
             currentTrail = mMap.addPolyline(currentTrailOptions);
-        currentTrail.setPoints(viewModel.getTrail());
+        currentTrail.setPoints(viewModel.getCurrentTrail());
     }
 
     public void updateCamera(Bundle args){
@@ -368,7 +375,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                             * Starts the location service
                             */
                             getActivity().startService(locationIntent);
-                            startTrail(trail_name);
+                            startMakingTrail(trail_name);
                             Log.e("startloc", "start service");
                             locButt_text = getResources().getString(R.string.stop_location);
                             locationButton.setText(R.string.stop_location);
@@ -386,7 +393,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             Log.d("stopLocationService", locButt_text);
             getActivity().stopService(locationIntent);
 
-            //Deals with the case if user starts and stops quickly
+            // Deals with the case if user starts and stops quickly
             if(viewModel.getPlayerPos() == null){
                 viewModel.setString(getResources().getString(R.string.start_location));
                 locationButton.setText(R.string.start_location);
@@ -419,11 +426,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             payload.put("location","");
         }
         payload.put("userid",mFireBaseAuth.getCurrentUser().getUid());
-        payload.put("name", viewModel.getTrailName());
+        payload.put("name", viewModel.getCurrentTrailName());
         payload.put("time",new Timestamp(new Date()));
         //firebase only accepts geopoints, so we have to convert the trail's latlng to geopoint
         ArrayList<GeoPoint> gpTrail= new ArrayList<>();
-        ArrayList<LatLng> trail = viewModel.getTrail();
+        ArrayList<LatLng> trail = viewModel.getCurrentTrail();
         if(trail != null){
             for (LatLng t : trail) {
                 gpTrail.add(new GeoPoint(t.latitude, t.longitude));
@@ -432,12 +439,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         }else{
             payload.put("trailPoints","");
         }
+
+        // trail id's are just the userid with the trail name appended to it
+        String trailId = mFireBaseAuth.getCurrentUser().getUid() + viewModel.getCurrentTrailName();
         //Adds in the payload
-        fstore.collection("trails").
-                add(payload)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+        fstore.collection("trails")
+                .document(trailId)
+                .set(payload)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
-                    public void onSuccess(DocumentReference documentReference) {
+                    public void onSuccess(Void aVoid) {
                         Toast.makeText(getContext(),"Trail successfully saved", Toast.LENGTH_SHORT).show();
                     }
                 })
@@ -450,33 +461,113 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 });
     }
 
-    //Start trail
-    public static void startTrail(String name) {
+    /**
+     * Sets up the viewmodel for us to start making a new trail
+     * @param name
+     */
+    public static void startMakingTrail(String name) {
         viewModel.resetTrail();
-        viewModel.setTrailName(name);
+        viewModel.setCurrentTrailName(name);
         viewModel.setMakingTrail(true);
-        currentTrailOptions.visible(true);
-    }
-    //Keep creating trail from a pause
-    public static void continueTrail(String name, ArrayList<LatLng> prefix){
-        viewModel.resetTrail();
-        viewModel.setTrailName(name);
-        viewModel.continueTrail(prefix);
-        viewModel.setMakingTrail(true);
+        for(String key : map_trails.keySet()) {
+            map_trails.get(key).setVisible(false);
+        }
         currentTrailOptions.visible(true);
     }
 
-    // discards the current trail
+    /**
+     * This function is called from onActivityCreated and is used to restore the trail state.
+     * Not just for making trails; if the user was running a trail at the time, this function
+     * should also restore that.
+     * @param name
+     * @param trail
+     * @param isMaking
+     * @param isRunning
+     */
+    public static void continueTrail(String name, ArrayList<LatLng> trail, boolean isMaking, boolean isRunning){
+        viewModel.resetTrail();
+        viewModel.setCurrentTrailName(name);
+        viewModel.setCurrentTrail(trail);
+        viewModel.setMakingTrail(isMaking);
+        viewModel.setRunningTrail(isRunning);
+        // don't display the trail if we aren't running or making one
+        for(String key : map_trails.keySet()) {
+            // don't want to render other trails if we are running/making one
+            map_trails.get(key).setVisible(!(isRunning || isMaking));
+        }
+        currentTrailOptions.visible(isRunning || isMaking);
+    }
+
+    /**
+     * Called if we want to get rid of the trail we are currently making
+     */
     public static void discardTrail() {
         viewModel.setMakingTrail(false);
-        viewModel.deleteTrail(viewModel.getTrailName());
+        viewModel.deleteTrail(viewModel.getCurrentTrailName());
+        viewModel.setCurrentTrailName("");
         currentTrailOptions.visible(false);
+        for(String key : map_trails.keySet()) {
+            map_trails.get(key).setVisible(true);
+        }
     }
 
+    /**
+     * Called when we're done making a new trail
+     */
     public static void endTrail() {
         viewModel.setMakingTrail(false);
+        viewModel.setCurrentTrailName("");
         //viewModel.stashTrail();
         currentTrailOptions.visible(false);
+        for(String key : map_trails.keySet()) {
+            map_trails.get(key).setVisible(true);
+        }
+    }
+
+    /**
+     * Called when the user would like to run an existing trail
+     * @param name
+     */
+    public static void runTrail(String name) {
+        viewModel.resetTrail();
+        viewModel.setMakingTrail(false);
+        viewModel.setRunningTrail(true);
+        viewModel.setCurrentTrailName(name);
+        viewModel.setCurrentTrail(viewModel.getTrailByName(name));
+        // don't render trails besides the one we are running
+        for(String key : map_trails.keySet()) {
+            map_trails.get(key).setVisible(false);
+        }
+        currentTrailOptions.visible(true);
+    }
+
+    /**
+     * Called if the user is running an existing trail and would like
+     * to leave without having completed it
+     */
+    public static void leaveTrail() {
+        viewModel.resetTrail();
+        viewModel.setRunningTrail(false);
+        viewModel.setCurrentTrailName("");
+        currentTrailOptions.visible(false);
+        for(String key : map_trails.keySet()) {
+            map_trails.get(key).setVisible(true);
+        }
+        // award partial XP? if we have time
+    }
+
+    /**
+     * Called when the user reaches the end of the trail they are running
+     */
+    public static void completeTrail() {
+        viewModel.resetTrail();
+        viewModel.setRunningTrail(false);
+        viewModel.setCurrentTrailName("");
+        currentTrailOptions.visible(false);
+        for(String key : map_trails.keySet()) {
+            map_trails.get(key).setVisible(true);
+        }
+        // award XP
     }
 
     /*
@@ -508,7 +599,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 }
                 viewModel.appendToTrail(pos);
                 currentTrail = mMap.addPolyline(currentTrailOptions);
-                currentTrail.setPoints(viewModel.getTrail());
+                currentTrail.setPoints(viewModel.getCurrentTrail());
+            }
+
+            // for now just check to see if the user has reached the last point on the trail
+            if(viewModel.isRunningTrail()) {
+                LatLng end = currentTrail.getPoints().get(currentTrail.getPoints().size() - 1);
+                if (getDistance(pos, end) < 2) {
+                    completeTrail();
+                }
             }
         }
     };
