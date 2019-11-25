@@ -47,6 +47,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -71,7 +72,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private FirebaseFirestore fstore;
     private FirebaseAuth mFireBaseAuth;
 
-
+    LatLng updated_cam;
     Marker marker;
     MarkerOptions marker_options = new MarkerOptions().anchor((float)0.5,(float)0.5);
     Button locationButton;
@@ -180,21 +181,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             }
             viewModel.setPlayerPos(savedInstanceState.getParcelable("last_pos"));
             //marker state when user clicks a polyline.
-            if(savedInstanceState.get("marker") != null){
+            if(savedInstanceState.getParcelable("marker") != null){
                 marker_options.position(savedInstanceState.getParcelable("marker"));
                 mMap.addMarker(marker_options);
             }
         }
     }
-
     //Given trailid's from the viewmodel or Firebase, draw out the trails.
     private void drawTrails(Set<String> keySet) {
         for(String key: keySet){
+            //if the key alread exists, don't redraw the trail
+            if(map_trails.get(key) != null){
+                break;
+            }
             Polyline trail;
             trail = mMap.addPolyline(map_trails_options);
             trail.setZIndex(-1);
             trail.setPoints((List<LatLng>)viewModel.returnTrailMap().get(key).get("trailPoints"));
-            trail.setTag(viewModel.returnTrailMap().get(key).get("name"));
+            trail.setTag(viewModel.returnTrailMap().get(key));
 
             //I need to get caps working so this is a placeholder
             //TODO: Replace this with caps, I have tried but they don't appear.
@@ -289,16 +293,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             @Override
             public void onPolylineClick(Polyline polyline) {
                 LatLng midpoint = polyline.getPoints().get(polyline.getPoints().size()/2);
-
+                Map m = (Map)polyline.getTag();
+                String name, uid, username;
+                try{
+                    name = m.get("name").toString();
+                    uid = m.get("userid").toString();
+                }catch (NullPointerException e){
+                    name = "Unknown";
+                    uid = "Unknown";
+                }
                 if(marker != null) marker.remove();
                 marker = mMap.addMarker(marker_options.position(midpoint)
-                        .title(polyline.getTag().toString()));
+                        .title(name)
+                        .snippet(uid));
                 marker.showInfoWindow();
             }
         });
 
         //for debugging purposes because i'm in africa lmao
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
         locationButton.setText(viewModel.get_current_text());
 
         /*Get last known coordinates, and i*/
@@ -307,6 +320,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         if(viewModel.getTrail() != null)
             currentTrail = mMap.addPolyline(currentTrailOptions);
         currentTrail.setPoints(viewModel.getTrail());
+    }
+
+    public void updateCamera(Bundle args){
+        if(args != null)
+            updated_cam = args.getParcelable("updated_view");
+        Log.e("as;ldkfja;lks",updated_cam.toString());
+        if(updated_cam != null){
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(updated_cam,15));
+        }
     }
 
     /**

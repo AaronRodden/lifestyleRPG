@@ -10,11 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MapsActivity extends AppCompatActivity{
     MapFragment mapFragment;
-
+    LatLng updated_view;
     FragmentManager manager = getSupportFragmentManager();
     public static final int REQUESTCODE = 1;
     BottomNavigationView bottomNavigationView;
@@ -56,6 +58,11 @@ public class MapsActivity extends AppCompatActivity{
         if (savedInstanceState != null){
             Log.e("MapsActivity", "savedInstance not null");
             mapFragment = (MapFragment) manager.getFragment(savedInstanceState,"maps_fragment");
+            if(updated_view != null){
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("updated_view", updated_view);
+                mapFragment.updateCamera(bundle);
+            }
         }else {
             Log.e("MapsActivity", "savedInstance null!");
             mapFragment = new MapFragment();
@@ -82,6 +89,7 @@ public class MapsActivity extends AppCompatActivity{
         if (requestCode == REQUESTCODE){
             if(resultCode == Activity.RESULT_OK){
                 Log.e("MapsActivity", "There is some result from trails activity");
+                updated_view = data.getParcelableExtra("LatLng");
             }
             if(resultCode == Activity.RESULT_CANCELED){
                 Log.e("MapsActivity", "No result from trails activity");

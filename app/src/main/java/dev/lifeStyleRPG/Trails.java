@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 /**
@@ -39,6 +40,7 @@ public class Trails extends AppCompatActivity {
                     case R.id.maps_screen:
                         Intent mapsIntent = new Intent(getApplicationContext(),MapsActivity.class);
                         mapsIntent.putExtra("result", "hello");
+                        mapsIntent.putExtra("LatLng", new LatLng(42.23,12.32));
                         setResult(Activity.RESULT_OK, mapsIntent);
                         //don't send any data
                         //setResult(Activity.RESULT_CANCELLED, mapsIntent);
