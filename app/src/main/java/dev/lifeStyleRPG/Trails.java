@@ -40,6 +40,9 @@ public class Trails extends AppCompatActivity {
                     case R.id.maps_screen:
                         Intent mapsIntent = new Intent(getApplicationContext(),MapsActivity.class);
                         mapsIntent.putExtra("result", "hello");
+                        //Trail search update camera. The reasoning was for the trails activity to send a result to
+                        //the maps activity, and the maps activity interacts with methods in map fragment to interact
+                        //with the map. I set that up, but update camera never seems to be called, and I'm not sure why
                         mapsIntent.putExtra("LatLng", new LatLng(42.23,12.32));
                         setResult(Activity.RESULT_OK, mapsIntent);
                         //don't send any data

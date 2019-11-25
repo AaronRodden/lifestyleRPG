@@ -72,6 +72,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private FirebaseFirestore fstore;
     private FirebaseAuth mFireBaseAuth;
 
+    /**
+     * This is the camera position read by the trails search activity
+     */
     LatLng updated_cam;
     Marker marker;
     MarkerOptions marker_options = new MarkerOptions().anchor((float)0.5,(float)0.5);
@@ -318,7 +321,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         });
 
         //for debugging purposes because i'm in africa lmao
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
+        //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(-34.058,22.43),15));
+        if(updated_cam != null) mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(updated_cam,15));
+
         locationButton.setText(viewModel.getCurrentText());
 
         /*Get last known coordinates, and i*/
@@ -329,6 +334,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         currentTrail.setPoints(viewModel.getCurrentTrail());
     }
 
+    //Trail search update camera. The reasoning was for the trails activity to send a result to
+    //the maps activity, and the maps activity interacts with methods in map fragment to interact
+    //with the map. I set that up, but update camera never seems to be called, and I'm not sure why
     public void updateCamera(Bundle args){
         if(args != null)
             updated_cam = args.getParcelable("updated_view");

@@ -58,11 +58,6 @@ public class MapsActivity extends AppCompatActivity{
         if (savedInstanceState != null){
             Log.e("MapsActivity", "savedInstance not null");
             mapFragment = (MapFragment) manager.getFragment(savedInstanceState,"maps_fragment");
-            if(updated_view != null){
-                Bundle bundle = new Bundle();
-                bundle.putParcelable("updated_view", updated_view);
-                mapFragment.updateCamera(bundle);
-            }
         }else {
             Log.e("MapsActivity", "savedInstance null!");
             mapFragment = new MapFragment();
@@ -90,6 +85,12 @@ public class MapsActivity extends AppCompatActivity{
             if(resultCode == Activity.RESULT_OK){
                 Log.e("MapsActivity", "There is some result from trails activity");
                 updated_view = data.getParcelableExtra("LatLng");
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("updated_view", updated_view);
+                //Trail search update camera. The reasoning was for the trails activity to send a result to
+                //the maps activity, and the maps activity interacts with methods in map fragment to interact
+                //with the map. I set that up, but update camera never seems to be called, and I'm not sure why
+                mapFragment.updateCamera(bundle);
             }
             if(resultCode == Activity.RESULT_CANCELED){
                 Log.e("MapsActivity", "No result from trails activity");
