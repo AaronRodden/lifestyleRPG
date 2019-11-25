@@ -93,12 +93,14 @@ public class mapsViewModel extends ViewModel {
 
     // TODO: get rid of this and add a way for the user to select a trail without knowing
     // the ID of the user that created it
-    public ArrayList<LatLng> getTrailByName(String name) {
+    public Map getTrailByName(String name) {
         for(String key : trails.keySet()) {
-            if(key.startsWith(name)) {
-                return (ArrayList) trails.get(key).get("trailPoints");
+            Log.e("viewmodel", "comparing key " + key);
+            if(key.endsWith(name)) {
+                return trails.get(key);
             }
         }
+        Log.e("In TrailByName function", "Wow here I am ");
         return null;
     }
 

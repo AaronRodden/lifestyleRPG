@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -71,6 +72,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private static mapsViewModel viewModel;
     private FirebaseFirestore fstore;
     private FirebaseAuth mFireBaseAuth;
+
+    private String userID;
+    private EditText emailId;
+
 
     /**
      * This is the camera position read by the trails search activity
@@ -281,6 +286,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             case R.id.MapsLocationButton:
                 startLocationService(view);
                 break;
+//            case R.id.
         }
     }
     /**
@@ -297,8 +303,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(Polyline polyline) {
+//                startLocationService(getView());
+                // These next two lines are how you start a location service (broadcast reciever will start as well)
+                locationIntent = new Intent(getActivity(), LocationService.class);
+                getActivity().startService(locationIntent);
+                Log.e("Debug message","In roberts polyline function");
                 LatLng midpoint = polyline.getPoints().get(polyline.getPoints().size()/2);
-                Map m = (Map)polyline.getTag();
+                Map m = viewModel.getTrailByName((String)polyline.getTag());
                 String name, uid, username;
                 try{
                     name = m.get("name").toString();
@@ -541,10 +552,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         viewModel.setMakingTrail(false);
         viewModel.setRunningTrail(true);
         viewModel.setCurrentTrailName(name);
-        viewModel.setCurrentTrail(viewModel.getTrailByName(name));
+        viewModel.setCurrentTrail((ArrayList)viewModel.getTrailByName(name).get("trailPoints"));
+        currentTrail.setPoints(viewModel.getCurrentTrail());
+//        Log.e("Current Trail: ", currentTrail.getTag().toString());
+
         // don't render trails besides the one we are running
         for(String key : map_trails.keySet()) {
-            map_trails.get(key).setVisible(false);
+            if (!(key.endsWith(viewModel.getCurrentTrailName()))){
+                map_trails.get(key).setVisible(false);
+            }
         }
         currentTrailOptions.visible(true);
     }
@@ -567,7 +583,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     /**
      * Called when the user reaches the end of the trail they are running
      */
-    public static void completeTrail() {
+    public void completeTrail() {
         viewModel.resetTrail();
         viewModel.setRunningTrail(false);
         viewModel.setCurrentTrailName("");
@@ -576,16 +592,62 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             map_trails.get(key).setVisible(true);
         }
         // award XP
+        updateExp();
+    }
+
+    private void updateExp() {
+
+        fstore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        userID = mFireBaseAuth.getCurrentUser().getUid();
+//        emailId = findViewById(R.id.editText);
+
+        Task<DocumentSnapshot> snap = fstore.collection("users").document(userID).get();
+        DocumentSnapshot snapshot = snap.getResult();
+        String priorExp = snapshot.get("experience").toString();
+        int newExp = Integer.parseInt(priorExp) + 10;
+
+//        TextView exptext;
+//        TextView trailsdone;
+//        TextView level;
+//        exptext = findViewById(R.id.totalEXP);
+//        trailsdone = findViewById(R.id.trailsDone);
+//        level = findViewById()
+//        String temp = exptext.toString();
+//        int numTemp = Integer.parseInt(temp) + 10;
+
+//        Map<String, Object> user = new HashMap<>();
+//        user.put("login", emailId);
+//        user.put("spriteID", 0);
+//        user.put("level", 1);
+//        user.put("experience", numTemp); //update experience
+//        user.put("trails failed", 0);
+//        user.put("userid", userID);
+
+        // Document parameters = userID
+        fstore.collection("users").document(userID)
+                .update(
+                        "experience", newExp
+                )
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 
     /*
     BroadCast receiver to interact with a local broadcast manager from Location Service.
     Below methods will interact with the maps fragment.
      */
-    private static BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            Log.e("Where am I?? ", "In the BroadcastReciever!!");
+
             double lat = intent.getDoubleExtra("lat", 0.0);
             double lon = intent.getDoubleExtra("lon", 0.0);
 
@@ -613,8 +675,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             // for now just check to see if the user has reached the last point on the trail
             if(viewModel.isRunningTrail()) {
                 LatLng end = currentTrail.getPoints().get(currentTrail.getPoints().size() - 1);
+                Log.e("Current LatLng: ", end.toString());
                 if (getDistance(pos, end) < 2) {
                     completeTrail();
+                    Log.e("Completed a trail: " , "Congrats!!");
                 }
             }
         }

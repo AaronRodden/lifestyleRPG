@@ -40,10 +40,10 @@ public class MapsActivity extends AppCompatActivity{
     public static final int REQUESTCODE = 1;
     BottomNavigationView bottomNavigationView;
 
-    FirebaseFirestore fStore;
-    FirebaseAuth mFireBaseAuth;
-    String userID;
-    EditText emailId;
+//    FirebaseFirestore fStore;
+//    FirebaseAuth mFireBaseAuth;
+//    String userID;
+//    EditText emailId;
 
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
@@ -134,44 +134,44 @@ public class MapsActivity extends AppCompatActivity{
     }
 
 
-    public void updateExp() {
-
-        fStore = FirebaseFirestore.getInstance();
-        mFireBaseAuth = FirebaseAuth.getInstance();
-
-
-        userID = mFireBaseAuth.getCurrentUser().getUid();
-        emailId = findViewById(R.id.editText);
-
-        TextView exptext;
-        TextView trailsdone;
-        TextView level;
-        exptext = findViewById(R.id.totalEXP);
-        trailsdone = findViewById(R.id.trailsDone);
-//        level = findViewById()
-        String temp = exptext.toString();
-        int numTemp = Integer.parseInt(temp) + 10;
-
-//        Map<String, Object> user = new HashMap<>();
-//        user.put("login", emailId);
-//        user.put("spriteID", 0);
-//        user.put("level", 1);
-//        user.put("experience", numTemp); //update experience
-//        user.put("trails failed", 0);
-//        user.put("userid", userID);
-
-        // Document parameters = userID
-        fStore.collection("trails").document(userID)
-                .update(
-                        "experience", numTemp
-                )
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Toast.makeText(getApplicationContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
-                    }
-                });
-    }
+//    public void updateExp() {
+//
+//        fStore = FirebaseFirestore.getInstance();
+//        mFireBaseAuth = FirebaseAuth.getInstance();
+//
+//
+//        userID = mFireBaseAuth.getCurrentUser().getUid();
+//        emailId = findViewById(R.id.editText);
+//
+//        TextView exptext;
+//        TextView trailsdone;
+//        TextView level;
+//        exptext = findViewById(R.id.totalEXP);
+//        trailsdone = findViewById(R.id.trailsDone);
+////        level = findViewById()
+//        String temp = exptext.toString();
+//        int numTemp = Integer.parseInt(temp) + 10;
+//
+////        Map<String, Object> user = new HashMap<>();
+////        user.put("login", emailId);
+////        user.put("spriteID", 0);
+////        user.put("level", 1);
+////        user.put("experience", numTemp); //update experience
+////        user.put("trails failed", 0);
+////        user.put("userid", userID);
+//
+//        // Document parameters = userID
+//        fStore.collection("trails").document(userID)
+//                .update(
+//                        "experience", numTemp
+//                )
+//                .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                    @Override
+//                    public void onSuccess(Void aVoid) {
+//                        Toast.makeText(getApplicationContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+//                    }
+//                });
+//    }
 
     @Override
     protected void onDestroy(){
