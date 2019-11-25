@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -29,7 +30,12 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback{
 
@@ -58,6 +64,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static PolylineOptions currentTrailOptions = new PolylineOptions()
                 .visible(false)
                 .width(3);
+
+    FirebaseFirestore fStore;
+    FirebaseAuth mFireBaseAuth;
 
     //This is called whenever the activity is started up, or when momentarily stopped
     @Override
@@ -194,6 +203,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         viewModel.setMakingTrail(false);
         viewModel.stashTrail();
         currentTrailOptions.visible(false);
+    }
+
+    public void updateExp() {
+        fStore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        String userID = mFireBaseAuth.getCurrentUser().getUid();
+        Task<QuerySnapshot> snapshot = fStore.collection("users").get();
+        QuerySnapshot snap = snapshot.getResult();
+        fStore.collection("users").whereEqualTo("userid",userID);
+//        .get();
+//        .get()
+//        .then(function(snap){
+//            snap.forEach(function(doc) {
+//                console.log(doc.id, " => ", doc.data());
+//                // Build doc ref from doc.id
+//                db.collection("users").doc(doc.id).update({foo: "bar"});
+//        };
     }
 
     /*
