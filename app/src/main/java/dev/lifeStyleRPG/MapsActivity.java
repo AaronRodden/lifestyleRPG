@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -206,12 +207,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void updateExp() {
+        FirebaseFirestore fStore;
+        FirebaseAuth mFireBaseAuth;
+        TextView exptext;
+        TextView trailsdone;
+        exptext = findViewById(R.id.totalEXP);
+        trailsdone = findViewById(R.id.trailsDone);
         fStore = FirebaseFirestore.getInstance();
         mFireBaseAuth = FirebaseAuth.getInstance();
-        String userID = mFireBaseAuth.getCurrentUser().getUid();
-        Task<QuerySnapshot> snapshot = fStore.collection("users").get();
-        QuerySnapshot snap = snapshot.getResult();
-        fStore.collection("users").whereEqualTo("userid",userID);
+
+        String temp = exptext.toString();
+        int numTemp = Integer.parseInt(temp) + 10;
+        exptext.setText(numTemp);
+
+        //        String userID = mFireBaseAuth.getCurrentUser().getUid();
+//        Task<QuerySnapshot> snapshot = fStore.collection("users").get();
+//        QuerySnapshot snap = snapshot.getResult();
+//        fStore.collection("users").whereEqualTo("userid",userID);
 //        .get();
 //        .get()
 //        .then(function(snap){
