@@ -207,18 +207,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void updateExp() {
-        FirebaseFirestore fStore;
-        FirebaseAuth mFireBaseAuth;
+
+        fStore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+
         TextView exptext;
         TextView trailsdone;
         exptext = findViewById(R.id.totalEXP);
         trailsdone = findViewById(R.id.trailsDone);
-        fStore = FirebaseFirestore.getInstance();
-        mFireBaseAuth = FirebaseAuth.getInstance();
 
         String temp = exptext.toString();
         int numTemp = Integer.parseInt(temp) + 10;
         exptext.setText(numTemp);
+
+        // Document parameters = trailID
+        fStore.collection("trails").document().set();
 
         //        String userID = mFireBaseAuth.getCurrentUser().getUid();
 //        Task<QuerySnapshot> snapshot = fStore.collection("users").get();
