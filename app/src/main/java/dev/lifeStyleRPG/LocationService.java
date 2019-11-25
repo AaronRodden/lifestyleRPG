@@ -80,14 +80,13 @@ public class LocationService extends Service {
 
     public void sendMessage(Double lat, Double lon){
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
-        Intent intent = new Intent("sample-event");
+        Intent intent = new Intent("locationService");
         //intent.putExtra("message", "lat: " + lat + " lon: " + lon);
         intent.putExtra("lat", lat);
         intent.putExtra("lon", lon);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
-    //we want to override onLocation changed function, plus do stuff within this class
     private class myLocationListener implements LocationListener {
         double lat_new,lon_new;
         /*

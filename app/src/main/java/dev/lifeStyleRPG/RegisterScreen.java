@@ -19,8 +19,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
-//sean
-
 public class RegisterScreen extends AppCompatActivity {
     EditText emailId, password;
     Button btnSignUp;
@@ -71,9 +69,7 @@ public class RegisterScreen extends AppCompatActivity {
                                 user.put("experience", 0);
                                 user.put("trails failed", 0);
                                 user.put("userid", userID);
-
                                 fStore.collection("users").document(userID).set(user);
-
                                 startActivity(new Intent(RegisterScreen.this, MainActivity.class));
                             }
                         }
@@ -81,11 +77,7 @@ public class RegisterScreen extends AppCompatActivity {
                 }
                 else{
                     Toast.makeText(RegisterScreen.this,"Error Occurred!",Toast.LENGTH_SHORT).show();
-
                 }
-
-
-
             }
         });
 
