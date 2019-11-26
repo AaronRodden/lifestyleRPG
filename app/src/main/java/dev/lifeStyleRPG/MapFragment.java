@@ -310,7 +310,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 // These next two lines are how you start a location service (broadcast reciever will start as well)
                 locationIntent = new Intent(getActivity(), LocationService.class);
                 getActivity().startService(locationIntent);
-                Log.e("Debug message","In roberts polyline function");
+//                Log.e("Debug message","In roberts polyline function");
                 LatLng midpoint = polyline.getPoints().get(polyline.getPoints().size()/2);
                 Map m = viewModel.getTrailByName((String)polyline.getTag());
                 String name, uid, username;
