@@ -209,6 +209,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             trail.setPoints((List<LatLng>)viewModel.getTrailMap().get(key).get("trailPoints"));
             trail.setTag(viewModel.getTrailMap().get(key).get("name"));
 
+            if(trail.getPoints().size() == 0){
+                break;
+            }
             //I need to get caps working so this is a placeholder
             //TODO: Replace this with caps, I have tried but they don't appear.
             CircleOptions startOptions = new CircleOptions()
@@ -413,13 +416,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             getActivity().stopService(locationIntent);
 
             // Deals with the case if user starts and stops quickly
-            if(viewModel.getPlayerPos() == null){
+            if(viewModel.getPlayerPos() == null || viewModel.getCurrentTrail().size() == 0){
                 viewModel.setString(getResources().getString(R.string.start_location));
                 locationButton.setText(R.string.start_location);
                 locButt_text = getResources().getString(R.string.start_location);
+                Toast.makeText(getContext(),"Trail too short!", Toast.LENGTH_LONG).show();
                 return;
+            }else{
+                //Empty trails shouldn't be saved into fire base
+                storeIntoFirebase();
             }
-            storeIntoFirebase();
             endTrail();
             viewModel.setString(getResources().getString(R.string.start_location));
             locationButton.setText(R.string.start_location);
