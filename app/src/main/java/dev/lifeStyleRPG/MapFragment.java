@@ -325,9 +325,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 marker.showInfoWindow();
                 runTrail(polyline.getTag().toString());
                 // make the button say "Stop",  and pressing it should let up abandon the trail
-                locButt_text = getResources().getString(R.string.stop_location);
-                locationButton.setText(R.string.stop_location);
-                viewModel.setString(getResources().getString(R.string.stop_location));
+                //This is problamatic as whenever you click stop it is trying to make a trail and send it to firebase
+//                locButt_text = getResources().getString(R.string.stop_location);
+//                locationButton.setText(R.string.stop_location);
+//                viewModel.setString(getResources().getString(R.string.stop_location));
             }
         });
 
@@ -600,39 +601,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         fstore = FirebaseFirestore.getInstance();
         mFireBaseAuth = FirebaseAuth.getInstance();
         userID = mFireBaseAuth.getCurrentUser().getUid();
-//        emailId = findViewById(R.id.editText);
 
-        Task<DocumentSnapshot> snap = fstore.collection("users").document(userID).get();
-        DocumentSnapshot snapshot = snap.getResult();
-        String priorExp = snapshot.get("experience").toString();
-        int newExp = Integer.parseInt(priorExp) + 10;
-
-//        TextView exptext;
-//        TextView trailsdone;
-//        TextView level;
-//        exptext = findViewById(R.id.totalEXP);
-//        trailsdone = findViewById(R.id.trailsDone);
-//        level = findViewById()
-//        String temp = exptext.toString();
-//        int numTemp = Integer.parseInt(temp) + 10;
-
-//        Map<String, Object> user = new HashMap<>();
-//        user.put("login", emailId);
-//        user.put("spriteID", 0);
-//        user.put("level", 1);
-//        user.put("experience", numTemp); //update experience
-//        user.put("trails failed", 0);
-//        user.put("userid", userID);
-
-        // Document parameters = userID
         fstore.collection("users").document(userID)
-                .update(
-                        "experience", newExp
-                )
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
-                    public void onSuccess(Void aVoid) {
-                        Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                        snapshot = snap.getResult();
+                        DocumentSnapshot snapshot = task.getResult();
+                        String priorExp = snapshot.get("experience").toString();
+                        int newExp = Integer.parseInt(priorExp) + 10;
+                        fstore.collection("users").document(userID)
+                                .update(
+                                        "experience", newExp
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
                     }
                 });
     }
