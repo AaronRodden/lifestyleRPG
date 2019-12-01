@@ -370,7 +370,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void startLocationService(View view) {
         //this is the location button on maps that starts the service
         locationButton = (Button) view;
-//        locButt_text = locationButton.getText().toString();
+        locButt_text = locationButton.getText().toString();
 //        locationIntent = new Intent(getActivity(), LocationService.class);
         if (locButt_text.equals(getResources().getString(R.string.start_location))){
             //ask for permissions.
