@@ -159,6 +159,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onActivityCreated(Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
         Log.e("MapsFragment", "onActivityCreated");
+        locationIntent = new Intent(getActivity(), LocationService.class);
+        getActivity().startService(locationIntent);
         //Let's pull information from firestore here
         //Attaches a Listener that performs an action once complete
         fstore.collection("trails").get()
@@ -329,9 +331,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 runTrail(polyline.getTag().toString());
                 // make the button say "Stop",  and pressing it should let up abandon the trail
                 //This is problamatic as whenever you click stop it is trying to make a trail and send it to firebase
-//                locButt_text = getResources().getString(R.string.stop_location);
-//                locationButton.setText(R.string.stop_location);
-//                viewModel.setString(getResources().getString(R.string.stop_location));
+                locButt_text = getResources().getString(R.string.stop_location);
+                locationButton.setText(R.string.stop_location);
             }
         });
 
@@ -425,12 +426,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 return;
             }else{
                 //Empty trails shouldn't be saved into fire base
-                storeIntoFirebase();
+                if (viewModel.isMakingTrail()) {
+                    storeIntoFirebase();
+                }
             }
             endTrail();
-            viewModel.setString(getResources().getString(R.string.start_location));
-            locationButton.setText(R.string.start_location);
-            locButt_text = getResources().getString(R.string.start_location);
+            // Only want to give exp here if user was creating a trail
+            if (viewModel.isMakingTrail()) {
+                int relativeLength = currentTrail.getPoints().size();
+                Log.e("Width of created trail", Integer.toString(currentTrail.getPoints().size()));
+                updateExp(25 * relativeLength);
+            }
+                viewModel.setString(getResources().getString(R.string.start_location));
+                locationButton.setText(R.string.start_location);
+                locButt_text = getResources().getString(R.string.start_location);
+
         }
     }
 
@@ -599,10 +609,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             map_trails.get(key).setVisible(true);
         }
         // award XP
-        updateExp();
+        int relativeLength = currentTrail.getPoints().size();
+        Log.e("Width of current trail" , Integer.toString(currentTrail.getPoints().size()));
+        updateExp(100 * relativeLength);
     }
 
-    private void updateExp() {
+    private void updateExp(double expAmount) {
 
         fstore = FirebaseFirestore.getInstance();
         mFireBaseAuth = FirebaseAuth.getInstance();
@@ -616,7 +628,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 //                        snapshot = snap.getResult();
                         DocumentSnapshot snapshot = task.getResult();
                         String priorExp = snapshot.get("experience").toString();
-                        int newExp = Integer.parseInt(priorExp) + 10;
+                        double newExp = Double.parseDouble(priorExp) + expAmount;
                         fstore.collection("users").document(userID)
                                 .update(
                                         "experience", newExp
