@@ -6,11 +6,12 @@
         android:enabled="true"
         android:title="Maps"
         android:icon="@drawable/illustration"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="ifRoom"
+        />
     <item
-        android:id="@+id/menu_screen"
+        android:id="@+id/trails_screen"
         android:enabled="true"
-        android:title="Menu"
+        android:title="Trails"
         android:icon="@drawable/illustration"
         app:showAsAction="ifRoom" />
     <item
