@@ -159,8 +159,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onActivityCreated(Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
         Log.e("MapsFragment", "onActivityCreated");
-        locationIntent = new Intent(getActivity(), LocationService.class);
-        getActivity().startService(locationIntent);
+        //start our location service
+//        locationIntent = new Intent(getActivity(), LocationService.class);
+//        getActivity().startService(locationIntent);
         //Let's pull information from firestore here
         //Attaches a Listener that performs an action once complete
         fstore.collection("trails").get()
@@ -415,6 +416,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
+            // Use this call if we don't want to always be updating location
             getActivity().stopService(locationIntent);
 
             // Deals with the case if user starts and stops quickly
@@ -612,6 +614,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         int relativeLength = currentTrail.getPoints().size();
         Log.e("Width of current trail" , Integer.toString(currentTrail.getPoints().size()));
         updateExp(100 * relativeLength);
+        locButt_text = getResources().getString(R.string.start_location);
+        locationButton.setText(R.string.start_location);
     }
 
     private void updateExp(double expAmount) {
