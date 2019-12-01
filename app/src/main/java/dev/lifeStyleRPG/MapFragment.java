@@ -399,7 +399,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                             /**
                             * Starts the location service
                             */
-                            getActivity().startService(locationIntent);
+//                            getActivity().startService(locationIntent);
                             startMakingTrail(trail_name);
                             Log.e("startloc", "start service");
                             locButt_text = getResources().getString(R.string.stop_location);
@@ -417,7 +417,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
             // Use this call if we don't want to always be updating location
-            getActivity().stopService(locationIntent);
+//            getActivity().stopService(locationIntent);
 
             // Deals with the case if user starts and stops quickly
             if(viewModel.getPlayerPos() == null || viewModel.getCurrentTrail().size() == 0){
