@@ -430,6 +430,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 //Empty trails shouldn't be saved into fire base
                 if (viewModel.isMakingTrail()) {
                     storeIntoFirebase();
+                    updateTrailsCreated();
                 }
             }
             endTrail();
@@ -614,6 +615,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         int relativeLength = currentTrail.getPoints().size();
         Log.e("Width of current trail" , Integer.toString(currentTrail.getPoints().size()));
         updateExp(100 * relativeLength);
+        updateTrailsCompleted();
         locButt_text = getResources().getString(R.string.start_location);
         locationButton.setText(R.string.start_location);
     }
@@ -641,6 +643,64 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                                     @Override
                                     public void onSuccess(Void aVoid) {
                                         Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    }
+                });
+    }
+
+    private void updateTrailsCreated() {
+
+        fstore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        userID = mFireBaseAuth.getCurrentUser().getUid();
+
+        fstore.collection("users").document(userID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                        snapshot = snap.getResult();
+                        DocumentSnapshot snapshot = task.getResult();
+                        String trailsCreated = snapshot.get("trails created").toString();
+                        double newCreated = Double.parseDouble(trailsCreated) + 1;
+                        fstore.collection("users").document(userID)
+                                .update(
+                                        "trails created", newCreated
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(getContext(), "Trails Count Updated!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    }
+                });
+    }
+
+    private void updateTrailsCompleted() {
+
+        fstore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        userID = mFireBaseAuth.getCurrentUser().getUid();
+
+        fstore.collection("users").document(userID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                        snapshot = snap.getResult();
+                        DocumentSnapshot snapshot = task.getResult();
+                        String trailsCompleted = snapshot.get("trails completed").toString();
+                        double newCompleted = Double.parseDouble(trailsCompleted) + 1;
+                        fstore.collection("users").document(userID)
+                                .update(
+                                        "trails completed", newCompleted
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(getContext(), "Trails Count Updated!", Toast.LENGTH_LONG).show();
                                     }
                                 });
                     }

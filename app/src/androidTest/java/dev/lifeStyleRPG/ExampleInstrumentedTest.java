@@ -47,7 +47,8 @@ public class ExampleInstrumentedTest {
         user.put("spriteID", 0);
         user.put("level", 1);
         user.put("experience", 0);
-        user.put("trails failed", 0);
+        user.put("trails completed", 0);
+        user.put("trails created", 0);
 
         Task<QuerySnapshot> snapshotBefore = db.collection("users").get();
         db.collection("users").add(user);

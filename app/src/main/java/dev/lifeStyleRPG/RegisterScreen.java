@@ -67,7 +67,8 @@ public class RegisterScreen extends AppCompatActivity {
                                 user.put("spriteID", 0);
                                 user.put("level", 1);
                                 user.put("experience", 0);
-                                user.put("trails failed", 0);
+                                user.put("trails completed", 0);
+                                user.put("trails created", 0);
                                 user.put("userid", userID);
                                 fStore.collection("users").document(userID).set(user);
                                 startActivity(new Intent(RegisterScreen.this, MainActivity.class));

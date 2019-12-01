@@ -20,6 +20,7 @@ public class PlayerMenu extends AppCompatActivity {
     TextView mainmenu;
     TextView exptext;
     TextView trailsdone;
+    TextView trailscreated;
 
     private static final String TAG = "PlayerMenu";
 
@@ -34,6 +35,8 @@ public class PlayerMenu extends AppCompatActivity {
         mainmenu = findViewById(R.id.textView);
         exptext = findViewById(R.id.totalEXP);
         trailsdone = findViewById(R.id.trailsDone);
+        trailscreated = findViewById(R.id.trailsCreated);
+//        trailscreated = findViewById(R.id.)
         DocumentReference docRef = fStore.collection("users").document(userID);
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -44,11 +47,14 @@ public class PlayerMenu extends AppCompatActivity {
                     fields.append(document.get("login"));
                     String theuser = fields.toString();
                     StringBuilder exp = new StringBuilder("Total EXP: \n");
-                    StringBuilder trailstxt = new StringBuilder("Trails Failed: \n");
-                    trailstxt.append(document.get("trails failed").toString());
+                    StringBuilder trailstxt = new StringBuilder("Trails Completed: \n");
+                    StringBuilder trailsCreatedText = new StringBuilder("Trails Created: \n");
+                    trailstxt.append(document.get("trails completed").toString());
                     exp.append(document.get("experience").toString());
+                    trailsCreatedText.append(document.get("trails created").toString());
                     exptext.setText(exp.toString());
                     trailsdone.setText(trailstxt.toString());
+                    trailscreated.setText(trailsCreatedText.toString());
                     mainmenu.setText(theuser);
                 } else {
                     Log.d(TAG, "get failed with ", task.getException());
