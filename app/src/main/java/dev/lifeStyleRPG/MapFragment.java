@@ -160,8 +160,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         super.onActivityCreated(savedInstanceState);
         Log.e("MapsFragment", "onActivityCreated");
         //start our location service
-//        locationIntent = new Intent(getActivity(), LocationService.class);
-//        getActivity().startService(locationIntent);
+        locationIntent = new Intent(getActivity(), LocationService.class);
+        getActivity().startService(locationIntent);
         //Let's pull information from firestore here
         //Attaches a Listener that performs an action once complete
         fstore.collection("trails").get()
@@ -311,8 +311,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             public void onPolylineClick(Polyline polyline) {
 //                startLocationService(getView());
                 // These next two lines are how you start a location service (broadcast reciever will start as well)
-                locationIntent = new Intent(getActivity(), LocationService.class);
-                getActivity().startService(locationIntent);
+//                locationIntent = new Intent(getActivity(), LocationService.class);
+//                getActivity().startService(locationIntent);
 //                Log.e("Debug message","In roberts polyline function");
                 LatLng midpoint = polyline.getPoints().get(polyline.getPoints().size()/2);
                 Map m = viewModel.getTrailByName((String)polyline.getTag());
@@ -370,8 +370,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void startLocationService(View view) {
         //this is the location button on maps that starts the service
         locationButton = (Button) view;
-        locButt_text = locationButton.getText().toString();
-        locationIntent = new Intent(getActivity(), LocationService.class);
+//        locButt_text = locationButton.getText().toString();
+//        locationIntent = new Intent(getActivity(), LocationService.class);
         if (locButt_text.equals(getResources().getString(R.string.start_location))){
             //ask for permissions.
             //TODO need to still handle a deny request
