@@ -162,6 +162,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         //start our location service
         locationIntent = new Intent(getActivity(), LocationService.class);
         getActivity().startService(locationIntent);
+
+//        double lat = locationIntent.getDoubleExtra("lat", 0.0);
+//        double lon = locationIntent.getDoubleExtra("lon", 0.0);
+//        LatLng pos = new LatLng(lat,lon);
+////        updated_cam = pos;
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
+
         //Let's pull information from firestore here
         //Attaches a Listener that performs an action once complete
         fstore.collection("trails").get()
@@ -727,7 +734,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 player_pos.remove();
             }
             //Log.d("receiver", "Got message: " + message);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
+//            mMap.moveCamera(CameraUpdateFactory.newLatLng(pos));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,17));
             player_pos = mMap.addCircle(circle_properties.center(pos));
             viewModel.setPlayerPos(pos);
 
@@ -746,7 +754,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             if(viewModel.isRunningTrail()) {
                 LatLng end = currentTrail.getPoints().get(currentTrail.getPoints().size() - 1);
                 Log.e("Current LatLng: ", end.toString());
-                if (getDistance(pos, end) < 2) {
+                if (getDistance(pos, end) < 10) {
                     completeTrail();
                     Log.e("Completed a trail: " , "Congrats!!");
                 }
