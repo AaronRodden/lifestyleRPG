@@ -2,8 +2,6 @@ package dev.lifeStyleRPG;
 
 import android.content.BroadcastReceiver;
 import android.content.Intent;
-import android.os.Looper;
-import android.util.Log;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProviders;
@@ -13,7 +11,6 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.GeoPoint;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -56,11 +53,9 @@ public class TrailUnitTests {
                 viewModelField.setAccessible(true);
                 viewModel = (mapsViewModel) viewModelField.get(activity.mapFragment);
             } catch(IllegalAccessException e) {
-                Log.e("unit-tests", "Exception while getting viewmodel; testing failed!");
-                Assert.assertFalse(true);
+                Assert.fail("Exception while getting viewmodel; testing failed!");
             } catch(NoSuchFieldException e) {
-                Log.e("unit-tests", "Field was not a member of class MapFragment; testing failed!");
-                Assert.assertFalse(true);
+                Assert.fail("Field was not a member of class MapFragment; testing failed!");
             }
 
             Assert.assertNotNull(viewModel);
@@ -90,11 +85,9 @@ public class TrailUnitTests {
                 receiverField.setAccessible(true);
                 hackedReceiver = (BroadcastReceiver) receiverField.get(null);
             } catch(IllegalAccessException e) {
-                Log.e("unit-tests", "Exception while accessing broadcast receiver; testing failed!");
-                Assert.assertFalse(true);
+                Assert.fail("Exception while accessing broadcast receiver; testing failed!");
             } catch(NoSuchFieldException e) {
-                Log.e("unit-tests", "Field was not a member of class MapFragment; testing failed!");
-                Assert.assertFalse(true);
+                Assert.fail("Field was not a member of class MapFragment; testing failed!");
             }
 
             Assert.assertNotNull(hackedReceiver);
