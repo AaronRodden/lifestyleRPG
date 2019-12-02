@@ -64,8 +64,9 @@ public class MapsActivity extends AppCompatActivity{
                         startActivity(profileIntent);
                         break;
                     case R.id.trails_screen:
-                        Intent trailsIntent = new Intent(getApplicationContext(),Trails.class);
+                        /*Intent trailsIntent = new Intent(getApplicationContext(),Trails.class);
                         startActivityForResult(trailsIntent, REQUESTCODE);
+                        */
                         break;
                     case R.id.settings_screen:
                         break;
@@ -113,7 +114,7 @@ public class MapsActivity extends AppCompatActivity{
                 bundle.putParcelable("updated_view", updated_view);
                 //Trail search update camera. The reasoning was for the trails activity to send a result to
                 //the maps activity, and the maps activity interacts with methods in map fragment to interact
-                mapFragment.updateCamera(bundle);
+                //mapFragment.updateCamera(bundle);
             }
             if(resultCode == Activity.RESULT_CANCELED){
                 Log.e("MapsActivity", "No result from trails activity");

@@ -1,14 +1,19 @@
 package dev.lifeStyleRPG;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -21,6 +26,9 @@ public class PlayerMenu extends AppCompatActivity {
     TextView exptext;
     TextView trailsdone;
     TextView trailscreated;
+
+    BottomNavigationView bottomNavigationView;
+
 
     private static final String TAG = "PlayerMenu";
 
@@ -62,8 +70,34 @@ public class PlayerMenu extends AppCompatActivity {
             }
         });
 
-
-
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.getMenu().findItem(R.id.player_profile_screen).setChecked(true);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch(menuItem.getItemId()){
+                    case R.id.maps_screen:
+                        Intent mapsIntent = new Intent(getApplicationContext(),MapsActivity.class);
+                        //Trail search update camera. The reasoning was for the trails activity to send a result to
+                        //the maps activity, and the maps activity interacts with methods in map fragment to interact
+                        mapsIntent.putExtra("LatLng", new LatLng(42.23,12.32));
+                        setResult(Activity.RESULT_OK, mapsIntent);
+                        //don't send any data
+                        //setResult(Activity.RESULT_CANCELLED, mapsIntent);
+                        finish();
+                        break;
+                    case R.id.player_profile_screen:
+                        break;
+                    case R.id.trails_screen:
+                        /*Intent trailsIntent = new Intent(getApplicationContext(),Trails.class);
+                        startActivityForResult(trailsIntent, REQUESTCODE);
+                        */
+                        break;
+                    case R.id.settings_screen:
+                        break;
+                }
+                return true;
+            }
+        });
     }
-
 }

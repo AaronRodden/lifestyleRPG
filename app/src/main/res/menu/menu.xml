@@ -5,25 +5,25 @@
         android:id="@+id/maps_screen"
         android:enabled="true"
         android:title="Maps"
-        android:icon="@drawable/illustration"
+        android:icon="@drawable/map_icon"
         app:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/trails_screen"
         android:enabled="true"
         android:title="Trails"
-        android:icon="@drawable/illustration"
+        android:icon="@drawable/search_icon"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/player_profile_screen"
         android:enabled="true"
         android:title="Profile"
-        android:icon="@drawable/illustration"
+        android:icon="@drawable/profile_icon"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/settings_screen"
         android:enabled="true"
         android:title="Settings"
-        android:icon="@drawable/illustration"
+        android:icon="@drawable/settings_icon"
         app:showAsAction="ifRoom" />
 </menu>
