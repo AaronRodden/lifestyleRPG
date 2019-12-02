@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class mapsViewModel extends ViewModel {
     //For startlocation button
-    private String currentText = "Track Location" ;
+    private String currentText = "Start Quest" ;
     private LatLng currentLocation;
     private String currentTrailName = "";
     private boolean makingTrail = false;
