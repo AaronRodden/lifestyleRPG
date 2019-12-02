@@ -631,29 +631,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
         fstore = FirebaseFirestore.getInstance();
         mFireBaseAuth = FirebaseAuth.getInstance();
-        userID = mFireBaseAuth.getCurrentUser().getUid();
-
-        fstore.collection("users").document(userID)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+        if(mFireBaseAuth.getCurrentUser() != null) {
+            userID = mFireBaseAuth.getCurrentUser().getUid();
+            fstore.collection("users").document(userID)
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
 //                        snapshot = snap.getResult();
-                        DocumentSnapshot snapshot = task.getResult();
-                        String priorExp = snapshot.get("experience").toString();
-                        double newExp = Double.parseDouble(priorExp) + expAmount;
-                        fstore.collection("users").document(userID)
-                                .update(
-                                        "experience", newExp
-                                )
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                    }
-                });
+                            DocumentSnapshot snapshot = task.getResult();
+                            String priorExp = snapshot.get("experience").toString();
+                            double newExp = Double.parseDouble(priorExp) + expAmount;
+                            fstore.collection("users").document(userID)
+                                    .update(
+                                            "experience", newExp
+                                    )
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                        }
+                    });
+        }
     }
 
     private void updateTrailsCreated() {
@@ -689,29 +690,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
         fstore = FirebaseFirestore.getInstance();
         mFireBaseAuth = FirebaseAuth.getInstance();
-        userID = mFireBaseAuth.getCurrentUser().getUid();
-
-        fstore.collection("users").document(userID)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+        if(mFireBaseAuth.getCurrentUser() != null) {
+            userID = mFireBaseAuth.getCurrentUser().getUid();
+            fstore.collection("users").document(userID)
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
 //                        snapshot = snap.getResult();
-                        DocumentSnapshot snapshot = task.getResult();
-                        String trailsCompleted = snapshot.get("trails completed").toString();
-                        double newCompleted = Double.parseDouble(trailsCompleted) + 1;
-                        fstore.collection("users").document(userID)
-                                .update(
-                                        "trails completed", newCompleted
-                                )
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Toast.makeText(getContext(), "Trails Count Updated!", Toast.LENGTH_LONG).show();
-                                    }
-                                });
-                    }
-                });
+                            DocumentSnapshot snapshot = task.getResult();
+                            String trailsCompleted = snapshot.get("trails completed").toString();
+                            double newCompleted = Double.parseDouble(trailsCompleted) + 1;
+                            fstore.collection("users").document(userID)
+                                    .update(
+                                            "trails completed", newCompleted
+                                    )
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Toast.makeText(getContext(), "Trails Count Updated!", Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                        }
+                    });
+        }
     }
 
     /*
