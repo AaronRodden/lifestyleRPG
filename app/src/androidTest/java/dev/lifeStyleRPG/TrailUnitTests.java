@@ -67,13 +67,13 @@ public class TrailUnitTests {
                 dummyGpList.add(new GeoPoint(Math.random(), Math.random()));
             }
             HashMap<String, Object> dummyTrail = new HashMap<>();
-            String trailName = "Dummy Thick";
             String userId = "arandomnumber1337";
-            dummyTrail.put("userid", "arandomnumber1337");
-            dummyTrail.put("name", "Dummy Thick");
+            String trailName = "Dummy Thick";
+            dummyTrail.put("userid", userId);
+            dummyTrail.put("name", trailName);
             dummyTrail.put("time", new Timestamp(new Date()));
             dummyTrail.put("trailPoints", dummyGpList);
-            String trailId = trailName + userId;
+            String trailId = userId + trailName;
             viewModel.insertTrail(trailId, dummyTrail);
             runTrail(trailName);
             Assert.assertTrue(viewModel.isRunningTrail());
@@ -83,7 +83,7 @@ public class TrailUnitTests {
             try {
                 Field receiverField = MapFragment.class.getDeclaredField("myBroadcastReceiver");
                 receiverField.setAccessible(true);
-                hackedReceiver = (BroadcastReceiver) receiverField.get(null);
+                hackedReceiver = (BroadcastReceiver) receiverField.get(activity.mapFragment);
             } catch(IllegalAccessException e) {
                 Assert.fail("Exception while accessing broadcast receiver; testing failed!");
             } catch(NoSuchFieldException e) {
