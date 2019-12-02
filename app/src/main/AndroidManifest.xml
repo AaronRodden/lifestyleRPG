@@ -18,11 +18,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".Trails"></activity>
-        <activity android:name=".LoginScreen" android:theme="@style/AppTheme.NoActionBar"/>
-        <activity android:name=".RegisterScreen" android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".Trails"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".LoginScreen"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".RegisterScreen"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="portrait"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -45,11 +51,13 @@
 
         <activity
             android:name=".MapsActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/title_activity_maps" />
 
         <activity
             android:name=".PlayerMenu"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/player_menu_activity" />
 

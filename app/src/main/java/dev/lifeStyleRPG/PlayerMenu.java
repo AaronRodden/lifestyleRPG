@@ -57,9 +57,12 @@ public class PlayerMenu extends AppCompatActivity {
                     StringBuilder exp = new StringBuilder("Total EXP: \n");
                     StringBuilder trailstxt = new StringBuilder("Trails Completed: \n");
                     StringBuilder trailsCreatedText = new StringBuilder("Trails Created: \n");
-                    trailstxt.append(document.get("trails completed").toString());
+                    if(document.get("trails completed") != null)
+                        trailstxt.append(document.get("trails completed").toString());
+
                     exp.append(document.get("experience").toString());
-                    trailsCreatedText.append(document.get("trails created").toString());
+                    if(document.get("trails created") != null)
+                        trailsCreatedText.append(document.get("trails created").toString());
                     exptext.setText(exp.toString());
                     trailsdone.setText(trailstxt.toString());
                     trailscreated.setText(trailsCreatedText.toString());
