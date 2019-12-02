@@ -1,43 +1,29 @@
 package dev.lifeStyleRPG;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.HashMap;
-import java.util.Map;
+import static dev.lifeStyleRPG.MapFragment.REQUEST_CODE;
 
 public class MapsActivity extends AppCompatActivity{
     MapFragment mapFragment;
     LatLng updated_view;
     FragmentManager manager = getSupportFragmentManager();
-    public static final int REQUESTCODE = 1;
+    public static final int REQUESTCODE = 100;
     BottomNavigationView bottomNavigationView;
 
 //    FirebaseFirestore fStore;
@@ -84,6 +70,8 @@ public class MapsActivity extends AppCompatActivity{
             Log.e("MapsActivity", "savedInstance not null");
             mapFragment = (MapFragment) manager.getFragment(savedInstanceState,"maps_fragment");
         }else {
+            //if permissions aren't set, ask
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
             Log.e("MapsActivity", "savedInstance null!");
             mapFragment = new MapFragment();
             FragmentTransaction fragmentTransaction = manager.beginTransaction();

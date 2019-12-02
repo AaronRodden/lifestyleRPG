@@ -5,7 +5,7 @@
     <string name="login_btn">Login</string>
     <string name="stop_location">Stop</string>
     <string name="menu_btn">Menu</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">lifeStyleRPG</string>
     <string name="app_title">Life Tracker RPG</string>
     <string name="title_activity_player_menu">PlayerMenu</string>
     <string name="title_activity_login">Sign in</string>
