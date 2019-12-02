@@ -33,6 +33,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
     <LinearLayout
+        android:id="@+id/player_menus"
         android:layout_width="match_parent"
         android:layout_height="330dp"
         android:orientation="vertical"
@@ -40,8 +41,8 @@
         android:layout_marginEnd="0dp"
         android:layout_marginBottom="0dp"
         android:background="@drawable/bg_menu"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
+        app:layout_constraintEnd_toStartOf="parent"
         app:layout_constraintStart_toStartOf="parent">
         <LinearLayout
             android:paddingTop="24dp"
@@ -187,7 +188,7 @@
                         android:layout_marginLeft="12dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Discover"
+                        android:text="Keep Going!"
                         android:textColor="#FFF"
                         android:textSize="18sp" />
 
@@ -196,6 +197,18 @@
 
         </LinearLayout>
     </LinearLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:labelVisibilityMode="labeled"
+        app:itemBackground="@color/blueish"
+        app:itemIconTint="@drawable/bottom_nav_icon_color_selector"
+        app:itemTextColor="@drawable/bottom_nav_icon_color_selector"
+        app:layout_constraintStart_toEndOf="@+id/player_menus"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/menu"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

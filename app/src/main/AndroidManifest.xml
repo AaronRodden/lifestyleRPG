@@ -19,8 +19,8 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <activity android:name=".Trails"></activity>
-        <activity android:name=".LoginScreen" />
-        <activity android:name=".RegisterScreen" />
+        <activity android:name=".LoginScreen" android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".RegisterScreen" android:theme="@style/AppTheme.NoActionBar"/>
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
@@ -50,6 +50,7 @@
 
         <activity
             android:name=".PlayerMenu"
+            android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/player_menu_activity" />
 
         <service
