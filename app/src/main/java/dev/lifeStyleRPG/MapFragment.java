@@ -756,7 +756,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             if(viewModel.isRunningTrail()) {
                 LatLng end = currentTrail.getPoints().get(currentTrail.getPoints().size() - 1);
                 Log.e("Current LatLng: ", end.toString());
-                if (getDistance(pos, end) < 10) {
+                if (getDistance(pos, end) < 15) {
                     completeTrail();
                     Log.e("Completed a trail: " , "Congrats!!");
                 }
