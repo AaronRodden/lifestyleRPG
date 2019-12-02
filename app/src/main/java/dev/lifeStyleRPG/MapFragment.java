@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -71,6 +72,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private static mapsViewModel viewModel;
     private FirebaseFirestore fstore;
     private FirebaseAuth mFireBaseAuth;
+
+    private String userID;
+    private EditText emailId;
+
 
     /**
      * This is the camera position read by the trails search activity
@@ -154,6 +159,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onActivityCreated(Bundle savedInstanceState){
         super.onActivityCreated(savedInstanceState);
         Log.e("MapsFragment", "onActivityCreated");
+        //start our location service
+        locationIntent = new Intent(getActivity(), LocationService.class);
+        getActivity().startService(locationIntent);
+
+//        double lat = locationIntent.getDoubleExtra("lat", 0.0);
+//        double lon = locationIntent.getDoubleExtra("lon", 0.0);
+//        LatLng pos = new LatLng(lat,lon);
+////        updated_cam = pos;
+//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
+
         //Let's pull information from firestore here
         //Attaches a Listener that performs an action once complete
         fstore.collection("trails").get()
@@ -204,6 +219,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             trail.setPoints((List<LatLng>)viewModel.getTrailMap().get(key).get("trailPoints"));
             trail.setTag(viewModel.getTrailMap().get(key).get("name"));
 
+            if(trail.getPoints().size() == 0){
+                break;
+            }
             //I need to get caps working so this is a placeholder
             //TODO: Replace this with caps, I have tried but they don't appear.
             CircleOptions startOptions = new CircleOptions()
@@ -281,6 +299,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             case R.id.MapsLocationButton:
                 startLocationService(view);
                 break;
+//            case R.id.
         }
     }
     /**
@@ -297,8 +316,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         mMap.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
             @Override
             public void onPolylineClick(Polyline polyline) {
+//                startLocationService(getView());
+                // These next two lines are how you start a location service (broadcast reciever will start as well)
+//                locationIntent = new Intent(getActivity(), LocationService.class);
+//                getActivity().startService(locationIntent);
+//                Log.e("Debug message","In roberts polyline function");
                 LatLng midpoint = polyline.getPoints().get(polyline.getPoints().size()/2);
-                Map m = (Map)polyline.getTag();
+                Map m = viewModel.getTrailByName((String)polyline.getTag());
                 String name, uid, username;
                 try{
                     name = m.get("name").toString();
@@ -314,9 +338,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 marker.showInfoWindow();
                 runTrail(polyline.getTag().toString());
                 // make the button say "Stop",  and pressing it should let up abandon the trail
+                //This is problamatic as whenever you click stop it is trying to make a trail and send it to firebase
                 locButt_text = getResources().getString(R.string.stop_location);
                 locationButton.setText(R.string.stop_location);
-                viewModel.setString(getResources().getString(R.string.stop_location));
             }
         });
 
@@ -354,7 +378,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         //this is the location button on maps that starts the service
         locationButton = (Button) view;
         locButt_text = locationButton.getText().toString();
-        locationIntent = new Intent(getActivity(), LocationService.class);
+//        locationIntent = new Intent(getActivity(), LocationService.class);
         if (locButt_text.equals(getResources().getString(R.string.start_location))){
             //ask for permissions.
             //TODO need to still handle a deny request
@@ -382,7 +406,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                             /**
                             * Starts the location service
                             */
-                            getActivity().startService(locationIntent);
+//                            getActivity().startService(locationIntent);
                             startMakingTrail(trail_name);
                             Log.e("startloc", "start service");
                             locButt_text = getResources().getString(R.string.stop_location);
@@ -399,20 +423,34 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 }
         }else if(locButt_text.equals(getResources().getString(R.string.stop_location))){
             Log.d("stopLocationService", locButt_text);
-            getActivity().stopService(locationIntent);
+            // Use this call if we don't want to always be updating location
+//            getActivity().stopService(locationIntent);
 
             // Deals with the case if user starts and stops quickly
-            if(viewModel.getPlayerPos() == null){
+            if(viewModel.getPlayerPos() == null || viewModel.getCurrentTrail().size() == 0){
                 viewModel.setString(getResources().getString(R.string.start_location));
                 locationButton.setText(R.string.start_location);
                 locButt_text = getResources().getString(R.string.start_location);
+                Toast.makeText(getContext(),"Trail too short!", Toast.LENGTH_LONG).show();
                 return;
+            }else{
+                //Empty trails shouldn't be saved into fire base
+                if (viewModel.isMakingTrail()) {
+                    storeIntoFirebase();
+                    updateTrailsCreated();
+                }
             }
-            storeIntoFirebase();
             endTrail();
-            viewModel.setString(getResources().getString(R.string.start_location));
-            locationButton.setText(R.string.start_location);
-            locButt_text = getResources().getString(R.string.start_location);
+            // Only want to give exp here if user was creating a trail
+            if (viewModel.isMakingTrail()) {
+                int relativeLength = currentTrail.getPoints().size();
+                Log.e("Width of created trail", Integer.toString(currentTrail.getPoints().size()));
+                updateExp(25 * relativeLength);
+            }
+                viewModel.setString(getResources().getString(R.string.start_location));
+                locationButton.setText(R.string.start_location);
+                locButt_text = getResources().getString(R.string.start_location);
+
         }
     }
 
@@ -541,10 +579,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         viewModel.setMakingTrail(false);
         viewModel.setRunningTrail(true);
         viewModel.setCurrentTrailName(name);
-        viewModel.setCurrentTrail(viewModel.getTrailByName(name));
+        viewModel.setCurrentTrail((ArrayList)viewModel.getTrailByName(name).get("trailPoints"));
+        currentTrail.setPoints(viewModel.getCurrentTrail());
+//        Log.e("Current Trail: ", currentTrail.getTag().toString());
+
         // don't render trails besides the one we are running
         for(String key : map_trails.keySet()) {
-            map_trails.get(key).setVisible(false);
+            if (!(key.endsWith(viewModel.getCurrentTrailName()))){
+                map_trails.get(key).setVisible(false);
+            }
         }
         currentTrailOptions.visible(true);
     }
@@ -567,7 +610,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     /**
      * Called when the user reaches the end of the trail they are running
      */
-    public static void completeTrail() {
+    public void completeTrail() {
         viewModel.resetTrail();
         viewModel.setRunningTrail(false);
         viewModel.setCurrentTrailName("");
@@ -576,16 +619,112 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             map_trails.get(key).setVisible(true);
         }
         // award XP
+        int relativeLength = currentTrail.getPoints().size();
+        Log.e("Width of current trail" , Integer.toString(currentTrail.getPoints().size()));
+        updateExp(100 * relativeLength);
+        updateTrailsCompleted();
+        locButt_text = getResources().getString(R.string.start_location);
+        locationButton.setText(R.string.start_location);
+    }
+
+    private void updateExp(double expAmount) {
+
+        fstore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        userID = mFireBaseAuth.getCurrentUser().getUid();
+
+        fstore.collection("users").document(userID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                        snapshot = snap.getResult();
+                        DocumentSnapshot snapshot = task.getResult();
+                        String priorExp = snapshot.get("experience").toString();
+                        double newExp = Double.parseDouble(priorExp) + expAmount;
+                        fstore.collection("users").document(userID)
+                                .update(
+                                        "experience", newExp
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(getContext(), "Experience Updated!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    }
+                });
+    }
+
+    private void updateTrailsCreated() {
+
+        fstore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        userID = mFireBaseAuth.getCurrentUser().getUid();
+
+        fstore.collection("users").document(userID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                        snapshot = snap.getResult();
+                        DocumentSnapshot snapshot = task.getResult();
+                        String trailsCreated = snapshot.get("trails created").toString();
+                        double newCreated = Double.parseDouble(trailsCreated) + 1;
+                        fstore.collection("users").document(userID)
+                                .update(
+                                        "trails created", newCreated
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(getContext(), "Trails Count Updated!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    }
+                });
+    }
+
+    private void updateTrailsCompleted() {
+
+        fstore = FirebaseFirestore.getInstance();
+        mFireBaseAuth = FirebaseAuth.getInstance();
+        userID = mFireBaseAuth.getCurrentUser().getUid();
+
+        fstore.collection("users").document(userID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                        snapshot = snap.getResult();
+                        DocumentSnapshot snapshot = task.getResult();
+                        String trailsCompleted = snapshot.get("trails completed").toString();
+                        double newCompleted = Double.parseDouble(trailsCompleted) + 1;
+                        fstore.collection("users").document(userID)
+                                .update(
+                                        "trails completed", newCompleted
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(getContext(), "Trails Count Updated!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    }
+                });
     }
 
     /*
     BroadCast receiver to interact with a local broadcast manager from Location Service.
     Below methods will interact with the maps fragment.
      */
-    private static BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            Log.e("Where am I?? ", "In the BroadcastReciever!!");
+
             double lat = intent.getDoubleExtra("lat", 0.0);
             double lon = intent.getDoubleExtra("lon", 0.0);
 
@@ -595,7 +734,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 player_pos.remove();
             }
             //Log.d("receiver", "Got message: " + message);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,15));
+//            mMap.moveCamera(CameraUpdateFactory.newLatLng(pos));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(pos,17));
             player_pos = mMap.addCircle(circle_properties.center(pos));
             viewModel.setPlayerPos(pos);
 
@@ -613,8 +753,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             // for now just check to see if the user has reached the last point on the trail
             if(viewModel.isRunningTrail()) {
                 LatLng end = currentTrail.getPoints().get(currentTrail.getPoints().size() - 1);
-                if (getDistance(pos, end) < 2) {
+                Log.e("Current LatLng: ", end.toString());
+                if (getDistance(pos, end) < 10) {
                     completeTrail();
+                    Log.e("Completed a trail: " , "Congrats!!");
                 }
             }
         }
